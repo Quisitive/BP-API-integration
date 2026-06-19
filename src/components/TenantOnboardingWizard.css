@@ -1,0 +1,100 @@
+.onboard-shell {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.onboard-header h2 {
+  margin-bottom: 0.5rem;
+}
+
+.onboard-header p {
+  color: #94a3b8;
+  margin-bottom: 1rem;
+}
+
+.onboard-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.onboard-form fieldset {
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #0b1220;
+}
+
+.onboard-form legend {
+  padding: 0 0.4rem;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.onboard-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+.onboard-form input,
+.onboard-form select {
+  border: 1px solid #475569;
+  border-radius: 6px;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 0.5rem 0.6rem;
+}
+
+.onboard-workloads {
+  margin-top: 0.5rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.inline-toggle {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.onboard-message {
+  border-radius: 6px;
+  padding: 0.65rem 0.75rem;
+}
+
+.onboard-error {
+  color: #fecaca;
+  background: rgba(185, 28, 28, 0.2);
+  border: 1px solid rgba(248, 113, 113, 0.5);
+}
+
+.onboard-success {
+  color: #bbf7d0;
+  background: rgba(22, 101, 52, 0.25);
+  border: 1px solid rgba(74, 222, 128, 0.5);
+}
+
+.onboard-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.onboard-actions button {
+  background: #0284c7;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.onboard-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

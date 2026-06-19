@@ -10,6 +10,7 @@
 // Port: 7071 (matching SecOps-O365-Command-Dashboard convention)
 // ---------------------------------------------------------------------------
 
+import 'dotenv/config';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,12 +28,13 @@ import { createRepository } from './storage/factory.js';
 import bpRoutes from './routes/bp/index.js';
 import xdrRoutes from './routes/xdr/index.js';
 import unifiedRoutes from './routes/unified/index.js';
+import { createOnboardingRouter } from './routes/onboarding.js';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const PORT = parseInt(process.env.PORT || '7071', 10);
+const PORT = parseInt(process.env.PORT || '3001', 10);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const STATIC_DIR = path.resolve(__dirname, '../../dist'); // Vite build output
 
@@ -42,6 +44,8 @@ const STATIC_DIR = path.resolve(__dirname, '../../dist'); // Vite build output
 
 async function main() {
   const app = express();
+  const allowLocalDevNoAuth =
+    process.env.ALLOW_LOCAL_DEV_NO_AUTH === 'true' || process.env.NODE_ENV !== 'production';
 
   // ---- Load tenant configuration ----
   const tenants = await loadTenants();
@@ -59,8 +63,12 @@ async function main() {
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: false }));
 
-  // Authentication — public paths skip JWT validation
-  app.use(optionalAuth(['/api/health', '/api/ready']));
+  // Authentication — in local dev, allow testing tenant/onboarding routes without Entra JWT.
+  const publicPaths = ['/api/health', '/api/ready'];
+  if (allowLocalDevNoAuth) {
+    publicPaths.push('/api/tenants', '/api/onboarding');
+  }
+  app.use(optionalAuth(publicPaths));
 
   // Audit — logs all write operations
   app.use(auditMiddleware);
@@ -102,6 +110,9 @@ async function main() {
     }));
     res.json(summaries);
   });
+
+  // ---- Onboarding API (client + O365 tenant setup) ----
+  app.use('/api/onboarding', createOnboardingRouter(registry));
 
   // ---- Serve React SPA (Vite build) ----
   app.use(express.static(STATIC_DIR));

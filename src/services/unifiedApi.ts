@@ -73,6 +73,25 @@ export interface IncidentSummary {
   lastUpdateTime: string;
   alertsCount: number;
   workloads: string[];
+  classification?: string;
+  determination?: string;
+}
+
+export interface IncidentEvidenceLink {
+  label: string;
+  url: string;
+  source: string;
+}
+
+export interface BpDetectionDetail {
+  id: string;
+  title?: string;
+  severity?: string;
+  status?: string;
+  groupKey?: string;
+  alertCount?: number;
+  createdAt?: string;
+  created?: string;
 }
 
 export function xdrIncidents(alias: string, top = 50) {
@@ -84,9 +103,13 @@ export function xdrIncident(alias: string, incidentId: string) {
 }
 
 export function xdrEvidence(alias: string, incidentId: string) {
-  return apiFetch<{ label: string; url: string; source: string }[]>(
+  return apiFetch<IncidentEvidenceLink[]>(
     `${BASE}/${alias}/xdr/evidence/${incidentId}`,
   );
+}
+
+export function bpDetection(alias: string, detectionId: string) {
+  return apiFetch<BpDetectionDetail>(`${BASE}/${alias}/bp/detections/${encodeURIComponent(detectionId)}`);
 }
 
 export function xdrCreatePlan(alias: string, incidentId: string) {
@@ -155,6 +178,19 @@ export interface AuditEvent {
   createdAt: string;
 }
 
+export interface TriageRecommendation {
+  id: string;
+  title: string;
+  description: string;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  mcpOperation?: {
+    action: string;
+    target: string;
+    parameters: Record<string, unknown>;
+  };
+  manualSteps?: string[];
+}
+
 export function unifiedAlerts(alias: string, limit = 100) {
   return apiFetch<AlertSnapshot[]>(`${BASE}/${alias}/unified/alerts?limit=${limit}`);
 }
@@ -195,8 +231,23 @@ export function unifiedAudit(alias: string, incidentId?: string) {
   return apiFetch<AuditEvent[]>(`${BASE}/${alias}/unified/audit${qs}`);
 }
 
+export function createUnifiedAuditEvent(
+  alias: string,
+  data: {
+    incidentId: string;
+    actor: string;
+    action: string;
+    details?: Record<string, unknown>;
+  },
+) {
+  return apiFetch<AuditEvent>(`${BASE}/${alias}/unified/audit`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 export function triageRecommend(alias: string, context: { title: string; severity: string; workloads: string[] }) {
-  return apiFetch<unknown[]>(`${BASE}/${alias}/unified/triage/recommend`, {
+  return apiFetch<TriageRecommendation[]>(`${BASE}/${alias}/unified/triage/recommend`, {
     method: 'POST',
     body: JSON.stringify(context),
   });

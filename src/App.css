@@ -75,6 +75,31 @@ body {
   width: 160px;
 }
 
+.app-nav-tenant select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 0.85rem;
+  min-width: 240px;
+}
+
+.app-link-button {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  background: #1e293b;
+  color: #cbd5e1;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.app-link-button:hover {
+  border-color: #64748b;
+  color: #fff;
+}
+
 /* Main area */
 .app-main {
   padding: 1rem;
@@ -84,4 +109,13 @@ body {
   padding: 4rem;
   color: #64748b;
   font-size: 1.1rem;
+}
+
+.app-error-banner {
+  margin-bottom: 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  background: rgba(185, 28, 28, 0.2);
+  color: #fecaca;
+  padding: 0.75rem;
 }

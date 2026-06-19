@@ -18,6 +18,8 @@ import type { Request, Response, NextFunction } from 'express';
 // Types
 // ---------------------------------------------------------------------------
 
+type AuthzRequest = Request & { user?: { roles: string[] } };
+
 export type InternalRole = 'admin' | 'analyst' | 'viewer';
 export type Permission = 'read' | 'write' | 'delete' | 'manage';
 
@@ -68,7 +70,7 @@ export function hasPermission(role: InternalRole, permission: Permission): boole
  */
 export function requirePermission(permission: Permission) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const user = req.user;
+    const user = (req as AuthzRequest).user;
     if (!user) {
       res.status(401).json({ error: 'Authentication required' });
       return;
@@ -93,7 +95,7 @@ export function requirePermission(permission: Permission) {
  */
 export function requireRole(...roles: InternalRole[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const user = req.user;
+    const user = (req as AuthzRequest).user;
     if (!user) {
       res.status(401).json({ error: 'Authentication required' });
       return;

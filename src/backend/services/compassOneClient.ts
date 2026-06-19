@@ -109,6 +109,15 @@ export interface AssetListResponse {
   meta: AssetPageMeta;
 }
 
+export interface CompassOneTenant {
+  id: string;
+  name: string;
+}
+
+export interface CompassOneTenantListResponse {
+  data: CompassOneTenant[];
+}
+
 // ---------------------------------------------------------------------------
 // Client
 // ---------------------------------------------------------------------------
@@ -125,6 +134,16 @@ export class CompassOneClient {
   constructor(opts?: CompassOneClientOptions) {
     this.baseUrl = opts?.baseUrl || process.env.COMPASSONE_API_URL || 'https://api.blackpointcyber.com';
     this.apiKey = opts?.apiKey || process.env.COMPASSONE_API_KEY || '';
+  }
+
+  // -------------------------------------------------------------------------
+  // Tenants (account-level)
+  // -------------------------------------------------------------------------
+
+  async listTenants(params?: { pageSize?: number }): Promise<CompassOneTenantListResponse> {
+    const qs = new URLSearchParams();
+    if (params?.pageSize != null) qs.set('pageSize', String(params.pageSize));
+    return this.getAccountLevel<CompassOneTenantListResponse>('/tenants', qs);
   }
 
   // -------------------------------------------------------------------------
@@ -282,6 +301,34 @@ export class CompassOneClient {
     };
 
     const response = await fetch(url, { method: 'GET', headers });
+
+    if (!response.ok) {
+      throw new Error(
+        `CompassOne API error: ${response.status} ${response.statusText} on GET ${path}`,
+      );
+    }
+
+    return (await response.json()) as T;
+  }
+
+  private async getAccountLevel<T>(path: string, qs?: URLSearchParams): Promise<T> {
+    const key = this.apiKey;
+    if (!key) {
+      throw new Error('CompassOne API key is not configured');
+    }
+
+    let url = `${this.baseUrl}/v1${path}`;
+    if (qs && qs.toString()) {
+      url += `?${qs.toString()}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
     if (!response.ok) {
       throw new Error(

@@ -9,8 +9,44 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { getRepository } from '../../storage/factory.js';
 import type { UnifiedTenantConfig } from '../../config/tenants.schema.js';
+import { newAuditEvent } from '../../storage/repository.js';
 
 const router = Router({ mergeParams: true });
+
+/**
+ * POST /api/tenants/:alias/unified/audit
+ * Record an audit event.
+ * Body: { incidentId, actor, action, details? }
+ */
+router.post('/', async (req: Request, res: Response) => {
+  const tenant = req.tenant as UnifiedTenantConfig;
+  const { incidentId, actor, action, details } = req.body as {
+    incidentId?: string;
+    actor?: string;
+    action?: string;
+    details?: Record<string, unknown>;
+  };
+
+  if (!incidentId || !actor || !action) {
+    res.status(400).json({ error: 'incidentId, actor, and action are required' });
+    return;
+  }
+
+  try {
+    const event = newAuditEvent({
+      tenantAlias: tenant.alias,
+      incidentId,
+      actor,
+      action,
+      details: details || {},
+    });
+
+    await getRepository().addAuditEvent(event);
+    res.status(201).json(event);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save audit event', detail: (err as Error).message });
+  }
+});
 
 /**
  * GET /api/tenants/:alias/unified/audit

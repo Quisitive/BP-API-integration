@@ -12,8 +12,6 @@
 
 import type { CaseRepository } from './repository.js';
 import { InMemoryCaseRepository } from './memory.js';
-import { PostgresCaseRepository } from './postgres.js';
-import { CosmosCaseRepository } from './cosmos.js';
 
 export type StorageBackend = 'memory' | 'postgres' | 'cosmos';
 
@@ -31,12 +29,16 @@ export async function createRepository(
   const resolved = backend || (process.env.STORAGE_BACKEND as StorageBackend) || 'memory';
 
   switch (resolved) {
-    case 'postgres':
+    case 'postgres': {
+      const { PostgresCaseRepository } = await import('./postgres.js');
       instance = new PostgresCaseRepository();
       break;
-    case 'cosmos':
+    }
+    case 'cosmos': {
+      const { CosmosCaseRepository } = await import('./cosmos.js');
       instance = new CosmosCaseRepository();
       break;
+    }
     case 'memory':
     default:
       instance = new InMemoryCaseRepository();
