@@ -7,6 +7,7 @@
 // ---------------------------------------------------------------------------
 
 import { CosmosClient, Container, Database } from '@azure/cosmos';
+import type { SqlParameter } from '@azure/cosmos';
 import type {
   CaseRecord,
   IncidentSummary,
@@ -114,7 +115,7 @@ export class CosmosCaseRepository implements CaseRepository {
   async listProposals(tenantAlias: string, incidentId?: string): Promise<RemediationProposal[]> {
     const container = this.container('proposals');
     let query = 'SELECT * FROM c WHERE c.tenantAlias = @t';
-    const params: Array<{ name: string; value: unknown }> = [{ name: '@t', value: tenantAlias }];
+    const params: SqlParameter[] = [{ name: '@t', value: tenantAlias }];
     if (incidentId) {
       query += ' AND c.incidentId = @i';
       params.push({ name: '@i', value: incidentId });
@@ -134,7 +135,7 @@ export class CosmosCaseRepository implements CaseRepository {
   async listAuditEvents(tenantAlias: string, incidentId?: string): Promise<AuditEvent[]> {
     const container = this.container('auditEvents');
     let query = 'SELECT * FROM c WHERE c.tenantAlias = @t';
-    const params: Array<{ name: string; value: unknown }> = [{ name: '@t', value: tenantAlias }];
+    const params: SqlParameter[] = [{ name: '@t', value: tenantAlias }];
     if (incidentId) {
       query += ' AND c.incidentId = @i';
       params.push({ name: '@i', value: incidentId });
