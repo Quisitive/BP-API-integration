@@ -33,6 +33,19 @@
 }
 .tip-export:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.tip-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.tip-export-sm {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  text-decoration: none;
+  display: inline-block;
+}
+
 .tip-section {
   margin-bottom: 1.5rem;
 }

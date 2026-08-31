@@ -8,6 +8,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   bpTuningInsights,
+  bpTuningTicketsCsvUrl,
   bpSnapshots,
   bpCaptureSnapshot,
   correlationTrends,
@@ -146,7 +147,18 @@ const TuningInsightsPanel: React.FC<Props> = ({ tenantAlias }) => {
 
           {/* Tuning candidates */}
           <section className="tip-section">
-            <h4>Tuning Candidates</h4>
+            <div className="tip-section-head">
+              <h4>Tuning Candidates</h4>
+              {data.tuningCandidates.length > 0 && (
+                <a
+                  className="tip-export tip-export-sm"
+                  href={bpTuningTicketsCsvUrl(tenantAlias)}
+                  download
+                >
+                  Export Tickets (CSV)
+                </a>
+              )}
+            </div>
             <p className="tip-hint">
               Rules with ≥ {data.thresholds.minSample} closeouts and ≥
               {' '}{pct(data.thresholds.noiseRateThreshold)} non-actionable outcomes.

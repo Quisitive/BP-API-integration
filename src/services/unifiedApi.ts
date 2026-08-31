@@ -91,6 +91,34 @@ export function bpTuningInsights(alias: string) {
   return apiFetch<TuningInsights>(`${BASE}/${alias}/bp/analytics/tuning-insights`);
 }
 
+export interface TuningTicket {
+  alertType: string;
+  title: string;
+  priority: 'P1' | 'P2' | 'P3';
+  summary: string;
+  recommendation: string;
+  evidence: {
+    total: number;
+    falsePositive: number;
+    noise: number;
+    fpRate: number;
+    noiseRate: number;
+    avgMttrHours: number | null;
+  };
+  labels: string[];
+}
+
+export function bpTuningTickets(alias: string) {
+  return apiFetch<{ generatedAt: string; count: number; tickets: TuningTicket[] }>(
+    `${BASE}/${alias}/bp/analytics/tuning-tickets`,
+  );
+}
+
+/** Direct URL for the CSV download (opened in a new tab / anchor href). */
+export function bpTuningTicketsCsvUrl(alias: string) {
+  return `${BASE}/${alias}/bp/analytics/tuning-tickets?format=csv`;
+}
+
 export interface TrendSnapshot {
   id: string;
   tenantAlias: string;

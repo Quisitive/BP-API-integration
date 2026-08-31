@@ -7,6 +7,7 @@ import type { Request, Response } from 'express';
 import { CompassOneClient } from '../../services/compassOneClient.js';
 import { getRepository } from '../../storage/factory.js';
 import { computeTuningInsights } from '../../services/tuningInsights.js';
+import { buildTuningTickets, ticketsToCsv } from '../../services/tuningTickets.js';
 import { captureTrendSnapshot } from '../../services/trendSnapshots.js';
 import { detectSnapshotAnomalies } from '../../services/snapshotAnomalies.js';
 import type { UnifiedTenantConfig } from '../../config/tenants.schema.js';
@@ -96,6 +97,36 @@ router.get('/tuning-insights', async (req: Request, res: Response) => {
     res.json(insights);
   } catch (err) {
     res.status(500).json({ error: 'Failed to compute tuning insights', detail: (err as Error).message });
+  }
+});
+
+/**
+ * GET /api/tenants/:alias/bp/analytics/tuning-tickets
+ * Converts tuning candidates into actionable backlog tickets.
+ * Optional ?minSample=3&noiseRateThreshold=0.5&limit=50&format=csv
+ */
+router.get('/tuning-tickets', async (req: Request, res: Response) => {
+  const tenant = req.tenant as UnifiedTenantConfig;
+  const minSample = req.query.minSample ? Number(req.query.minSample) : undefined;
+  const noiseRateThreshold = req.query.noiseRateThreshold
+    ? Number(req.query.noiseRateThreshold)
+    : undefined;
+  const limit = req.query.limit ? Number(req.query.limit) : undefined;
+
+  try {
+    const closeouts = await getRepository().listCloseouts(tenant.alias, 1000);
+    const insights = computeTuningInsights(closeouts, { minSample, noiseRateThreshold });
+    const tickets = buildTuningTickets(insights, { limit });
+
+    if ((req.query.format as string) === 'csv') {
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="tuning-tickets-${tenant.alias}.csv"`);
+      res.send(ticketsToCsv(tickets));
+      return;
+    }
+    res.json({ generatedAt: insights.generatedAt, count: tickets.length, tickets });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to build tuning tickets', detail: (err as Error).message });
   }
 });
 
