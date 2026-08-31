@@ -140,6 +140,15 @@ export interface DetectionCorrelation {
   createdAt: string;
 }
 
+/** Normalized closeout outcome derived from the free-form resolution value. */
+export type Disposition =
+  | 'true-positive'
+  | 'false-positive'
+  | 'benign'
+  | 'duplicate'
+  | 'informational'
+  | 'other';
+
 export interface CloseoutRecord {
   id: string;
   tenantAlias: string;
@@ -149,6 +158,12 @@ export interface CloseoutRecord {
   closedAt: string;
   resolution: string;
   notes?: string;
+  /** Normalized outcome for trend/tuning analytics. */
+  disposition?: Disposition;
+  /** Alert types of the linked BP detection, captured at close time. */
+  alertTypes?: string[];
+  /** Creation time of the linked BP detection, for MTTR calculation. */
+  detectionCreatedAt?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -165,4 +180,103 @@ export interface AlertSnapshot {
   status: string;
   createdAt: string;
   snapshotAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Trend Snapshot (point-in-time metrics for long-term trending)
+// ---------------------------------------------------------------------------
+// Persisted periodically to build history beyond the Blackpoint 90-day API
+// window: detection volume + closeout disposition mix at capture time.
+
+export interface TrendSnapshot {
+  id: string;
+  tenantAlias: string;
+  capturedAt: string;
+  openDetections: number;
+  resolvedDetections: number;
+  totalDetections: number;
+  closeoutCount: number;
+  dispositionCounts: Record<string, number>;
+}
+
+// ---------------------------------------------------------------------------
+// After Action Report (AAR) — Incident Case Write-Up
+// ---------------------------------------------------------------------------
+
+export type RemediationPriority = 'P1' | 'P2' | 'P3' | 'P4';
+export type RemediationActionStatus = 'open' | 'in-progress' | 'completed' | 'not-needed';
+export type AarStatus = 'draft' | 'final';
+
+/** A single recommended next step for remediation. */
+export interface RemediationAction {
+  id: string;
+  title: string;
+  description: string;
+  /** By who — owning team or role responsible. */
+  owner: string;
+  /** Which timeline — target completion window (e.g. "Immediate", "24h", "1 week"). */
+  timeline: string;
+  /** Which priority to tackle in. */
+  priority: RemediationPriority;
+  status: RemediationActionStatus;
+  /** Whether the action was auto-suggested or authored by the analyst. */
+  source: 'auto' | 'analyst';
+  riskLevel?: RiskLevel;
+}
+
+/** Reference to a source incident/detection/alert included in the report. */
+export interface AarSourceRef {
+  system: 'blackpoint' | 'defender-xdr';
+  kind: 'incident' | 'detection' | 'alert';
+  id: string;
+  title?: string;
+  severity?: string;
+  status?: string;
+  createdAt?: string;
+}
+
+/** A chronological event drawn from the aggregated sources. */
+export interface AarTimelineEntry {
+  timestamp: string;
+  source: 'blackpoint' | 'defender-xdr';
+  label: string;
+  detail?: string;
+}
+
+/** The full Incident After Action Report record. */
+export interface AfterActionReport {
+  id: string;
+  tenantAlias: string;
+  title: string;
+  status: AarStatus;
+  authoredBy: string;
+  createdAt: string;
+  updatedAt: string;
+  /** Highest severity across the aggregated sources. */
+  severity: string;
+  /** Aggregated source references (BP + XDR incidents/detections/alerts). */
+  sources: AarSourceRef[];
+  /** Merged chronological timeline. */
+  timeline: AarTimelineEntry[];
+  /** Distinct impacted assets/entities pulled from the sources. */
+  impactedAssets: string[];
+  // Narrative sections (analyst-editable) --------------------------------
+  executiveSummary: string;
+  detectionSummary: string;
+  investigationFindings: string;
+  containmentActions: string;
+  rootCause: string;
+  lessonsLearned: string;
+  // Recommendations ------------------------------------------------------
+  remediationActions: RemediationAction[];
+  /** Whether remediation is still outstanding. */
+  outstandingRisk: boolean;
+}
+
+/** Request body to generate a draft AAR by aggregating sources. */
+export interface GenerateAarRequest {
+  title?: string;
+  authoredBy: string;
+  xdrIncidentIds?: string[];
+  bpDetectionIds?: string[];
 }

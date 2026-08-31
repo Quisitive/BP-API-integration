@@ -14,6 +14,8 @@ import type {
   DetectionCorrelation,
   CloseoutRecord,
   AlertSnapshot,
+  TrendSnapshot,
+  AfterActionReport,
 } from '../types.js';
 import type { CaseRepository } from './repository.js';
 import { toCaseRecord } from './repository.js';
@@ -26,6 +28,8 @@ export class InMemoryCaseRepository implements CaseRepository {
   private correlations: DetectionCorrelation[] = [];
   private closeouts: CloseoutRecord[] = [];
   private alertSnapshots: AlertSnapshot[] = [];
+  private trendSnapshots: TrendSnapshot[] = [];
+  private reports = new Map<string, AfterActionReport>();
 
   async init(): Promise<void> {
     // No-op for in-memory
@@ -150,5 +154,39 @@ export class InMemoryCaseRepository implements CaseRepository {
     return this.alertSnapshots
       .filter((s) => s.tenantAlias === tenantAlias)
       .slice(0, limit);
+  }
+
+  // -- Trend Snapshots ------------------------------------------------------
+
+  async saveTrendSnapshot(snapshot: TrendSnapshot): Promise<void> {
+    this.trendSnapshots.push(snapshot);
+  }
+
+  async listTrendSnapshots(tenantAlias: string, limit = 500): Promise<TrendSnapshot[]> {
+    return this.trendSnapshots
+      .filter((s) => s.tenantAlias === tenantAlias)
+      .sort((a, b) => a.capturedAt.localeCompare(b.capturedAt))
+      .slice(-limit);
+  }
+
+  // -- After Action Reports -------------------------------------------------
+
+  async saveReport(report: AfterActionReport): Promise<void> {
+    this.reports.set(`${report.tenantAlias}:${report.id}`, report);
+  }
+
+  async getReport(tenantAlias: string, reportId: string): Promise<AfterActionReport | null> {
+    return this.reports.get(`${tenantAlias}:${reportId}`) ?? null;
+  }
+
+  async listReports(tenantAlias: string, limit = 100): Promise<AfterActionReport[]> {
+    return [...this.reports.values()]
+      .filter((r) => r.tenantAlias === tenantAlias)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .slice(0, limit);
+  }
+
+  async deleteReport(tenantAlias: string, reportId: string): Promise<void> {
+    this.reports.delete(`${tenantAlias}:${reportId}`);
   }
 }

@@ -9,6 +9,7 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { getRepository } from '../../storage/factory.js';
+import { computeCorrelationTrends } from '../../services/correlationTrends.js';
 import type { UnifiedTenantConfig } from '../../config/tenants.schema.js';
 import type { DetectionCorrelation } from '../../types.js';
 
@@ -26,6 +27,21 @@ router.get('/', async (req: Request, res: Response) => {
     res.json(correlations);
   } catch (err) {
     res.status(500).json({ error: 'Failed to list correlations', detail: (err as Error).message });
+  }
+});
+
+/**
+ * GET /api/tenants/:alias/unified/correlations/trends
+ * Cross-source correlation trends (volume by week, type mix, corroboration).
+ */
+router.get('/trends', async (req: Request, res: Response) => {
+  const tenant = req.tenant as UnifiedTenantConfig;
+
+  try {
+    const correlations = await getRepository().listCorrelations(tenant.alias);
+    res.json(computeCorrelationTrends(correlations));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to compute correlation trends', detail: (err as Error).message });
   }
 });
 

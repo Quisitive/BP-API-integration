@@ -4,7 +4,7 @@ Centralized Security Operations dashboard combining **Blackpoint Cyber (CompassO
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │  React SPA (Vite, port 3000 in dev)                     │
 │  ┌─────────┬─────────┬─────────┬─────────┬─────────────┐ │
@@ -38,14 +38,13 @@ Centralized Security Operations dashboard combining **Blackpoint Cyber (CompassO
 The product is split into cooperating modules. Their alpha-stage hosting differs:
 
 | Component | Alpha hosting | Notes |
-|-----------|---------------|-------|
+| --- | --- | --- |
 | **Unified SOC Command Dashboard** (this repo) | **Local install** | Runs on an analyst workstation via `npm run dev` (backend `:3001`, Vite UI `:3000`). Reads provider credentials from local `.env` + `config/tenants.json`. |
 | **CompassOne / Blackpoint API** | Network (vendor SaaS) | `https://api.blackpointcyber.com`. Reached directly from the local backend with the account-level `COMPASSONE_API_KEY`. |
 | **Microsoft Defender XDR** | Network (Microsoft cloud) | Microsoft Graph Security API. Reached via MSAL `client_credentials` using per-tenant Entra app registrations stored in `config/tenants.json`. |
 | **Defender Response MCP gateway** (`SecOps-O365-Command-Dashboard` module) | **Network application** (deployed separately) | Receives approved remediation proposals from this module over a signed webhook (`MCP_AUTOMATION_WEBHOOK_URL` / `MCP_AUTOMATION_WEBHOOK_SECRET`). Optional in alpha — if unset, remediation falls back to manual steps. |
 
 **Module interaction summary:** this dashboard is the local control surface. It *reads* from CompassOne and Defender XDR (both network SaaS), and *writes back* incident updates to Defender XDR. Approved automated responses are *dispatched* to the network-deployed Defender Response MCP gateway (the SecOps-O365 module), which performs the privileged device/identity actions. For alpha, everything except the MCP gateway runs locally on the operator's machine.
-
 
 ## Features
 
@@ -121,6 +120,7 @@ cp config/tenants.example.json config/tenants.json
 ```
 
 Each tenant entry includes:
+
 - `alias` — URL-safe identifier used in all API paths
 - `blackpoint.customerId` — the Blackpoint customer UUID (optional `apiBaseUrl`, `apiKeyOverride`)
 - `microsoft` — `tenantId`, `clientId`, `clientSecret`, `enabledWorkloads[]` (set the whole object to `null` for BP-only tenants / local dev without Entra credentials)
@@ -140,6 +140,8 @@ Each tenant entry includes:
 
 Instead of hand-editing JSON, use the **Tenant Onboarding** panel in the dashboard:
 
+Before requesting client credentials, use [docs/client-onboarding-permissions.md](docs/client-onboarding-permissions.md) as the permissions checklist for Blackpoint, Microsoft Defender XDR, network access, and approval tracking.
+
 1. Open the dashboard and select **Tenant Onboarding**.
 2. The wizard calls `GET /api/onboarding/blackpoint-tenants` to list every Blackpoint customer on your account.
 3. Pick a customer, set an alias/display name, and (optionally) add Microsoft Defender credentials.
@@ -154,8 +156,9 @@ npm run dev          # Starts both backend (tsx watch :3001) + Vite dev server (
 ```
 
 Access:
-- **Dashboard UI**: http://localhost:3000 (Vite dev server proxies `/api` to the backend)
-- **API Health**: http://localhost:3001/api/health
+
+- **Dashboard UI**: <http://localhost:3000> (Vite dev server proxies `/api` to the backend)
+- **API Health**: <http://localhost:3001/api/health>
 
 ### Build & Production
 
@@ -171,7 +174,6 @@ docker build -t soc-command .
 docker run -p 3001:3001 --env-file .env soc-command
 ```
 
-
 ## API Reference
 
 All tenant-scoped routes: `GET|POST|PATCH /api/tenants/:alias/...`
@@ -181,7 +183,7 @@ All tenant-scoped routes: `GET|POST|PATCH /api/tenants/:alias/...`
 Account-level routes (not tenant-scoped) that power the Tenant Onboarding wizard.
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | GET | `/api/onboarding/tenants` | List onboarded tenants (secret-free summaries) |
 | GET | `/api/onboarding/blackpoint-tenants` | List all Blackpoint customers on the account (max `pageSize` 200) |
 | POST | `/api/onboarding/tenants` | Onboard a new tenant; persists to `config/tenants.json` and registers it live |
@@ -190,7 +192,7 @@ Account-level routes (not tenant-scoped) that power the Tenant Onboarding wizard
 ### Blackpoint (`/bp`)
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | GET | `/bp/detections` | List detections (?status, ?skip, ?take) |
 | GET | `/bp/detections/:id` | Get single detection |
 | GET | `/bp/detections/:id/alerts` | Get alerts for detection |
@@ -207,7 +209,7 @@ Account-level routes (not tenant-scoped) that power the Tenant Onboarding wizard
 ### Defender XDR (`/xdr`)
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | GET | `/xdr/incidents` | List incidents (?top, ?filter) |
 | GET | `/xdr/incidents/:id` | Get single incident |
 | PATCH | `/xdr/incidents/:id` | Update incident (writeback) |
@@ -221,7 +223,7 @@ Account-level routes (not tenant-scoped) that power the Tenant Onboarding wizard
 ### Unified (`/unified`)
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | GET | `/unified/alerts` | Cross-source alert timeline (?limit, ?source) |
 | POST | `/unified/alerts` | Record alert snapshot |
 | GET | `/unified/correlations` | List all correlations |
@@ -240,7 +242,7 @@ Account-level routes (not tenant-scoped) that power the Tenant Onboarding wizard
 
 ## Project Structure
 
-```
+```text
 src/
   backend/
     config/          # Tenant schema, loader, example JSON

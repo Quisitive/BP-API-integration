@@ -9,7 +9,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { CompassOneClient } from '../services/compassOneClient.js';
+import { CompassOneClient, CompassOneApiError } from '../services/compassOneClient.js';
 import type {
   DefenderWorkload,
   MicrosoftTenantConfig,
@@ -153,6 +153,14 @@ export function createOnboardingRouter(registry: Map<string, UnifiedTenantConfig
       const tenants = (response.data || []).map((t) => ({ id: t.id, name: t.name }));
       res.json({ data: tenants });
     } catch (err) {
+      if (err instanceof CompassOneApiError && (err.status === 401 || err.status === 403)) {
+        res.status(err.status).json({
+          error:
+            'Blackpoint API key is invalid or expired. Update COMPASSONE_API_KEY in .env with a current CompassOne key, then restart the server.',
+          detail: err.body || err.message,
+        });
+        return;
+      }
       res.status(502).json({
         error: 'Failed to fetch Blackpoint tenants',
         detail: (err as Error).message,

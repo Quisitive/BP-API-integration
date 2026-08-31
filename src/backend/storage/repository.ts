@@ -17,6 +17,8 @@ import type {
   DetectionCorrelation,
   CloseoutRecord,
   AlertSnapshot,
+  TrendSnapshot,
+  AfterActionReport,
 } from '../types.js';
 
 // ---------------------------------------------------------------------------
@@ -59,6 +61,16 @@ export interface CaseRepository {
   // -- Alert Snapshots (cross-source timeline) ------------------------------
   saveAlertSnapshot(snapshot: AlertSnapshot): Promise<void>;
   listAlertSnapshots(tenantAlias: string, limit?: number): Promise<AlertSnapshot[]>;
+
+  // -- Trend Snapshots (long-term metric history) ---------------------------
+  saveTrendSnapshot(snapshot: TrendSnapshot): Promise<void>;
+  listTrendSnapshots(tenantAlias: string, limit?: number): Promise<TrendSnapshot[]>;
+
+  // -- After Action Reports (case write-ups) --------------------------------
+  saveReport(report: AfterActionReport): Promise<void>;
+  getReport(tenantAlias: string, reportId: string): Promise<AfterActionReport | null>;
+  listReports(tenantAlias: string, limit?: number): Promise<AfterActionReport[]>;
+  deleteReport(tenantAlias: string, reportId: string): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------

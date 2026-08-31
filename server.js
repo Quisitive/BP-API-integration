@@ -1,103 +1,64 @@
-import 'dotenv/config.js';
+import 'dotenv/config';
 import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 const app = express();
-const PORT = process.env.PORT || 4010;
+const PORT = process.env.DASHBOARD_PORT || 4010;
+const API_TARGET = process.env.UNIFIED_API_TARGET || 'http://localhost:3001';
 const BP_API_KEY = process.env.BLACKPOINT_API_KEY || '';
 
-console.log('Loaded BP_API_KEY:', BP_API_KEY ? '✓ PRESENT' : '✗ MISSING');
-
-// Load tenants configuration
 let tenants = [];
 try {
   const tenantsPath = path.join(__dirname, 'config', 'tenants.json');
   if (fs.existsSync(tenantsPath)) {
     const tenantsData = JSON.parse(fs.readFileSync(tenantsPath, 'utf8'));
-    tenants = tenantsData.map(t => ({
-      alias: t.alias,
-      displayName: t.displayName,
-      enabled: t.enabled,
-      hasBlackpoint: !!t.blackpoint,
-      hasMicrosoft: !!t.microsoft,
+    tenants = tenantsData.map((tenant) => ({
+      alias: tenant.alias,
+      displayName: tenant.displayName,
+      enabled: tenant.enabled,
+      hasBlackpoint: Boolean(tenant.blackpoint),
+      hasMicrosoft: Boolean(tenant.microsoft),
     }));
   }
-} catch (err) {
-  console.warn('Failed to load tenants configuration:', err.message);
+} catch (error) {
+  console.warn('Failed to load tenants configuration:', error.message);
 }
 
-// Proxy /v1 requests to the Blackpoint CompassOne API
-// Add authentication header before proxying
-if (BP_API_KEY) {
-  app.use('/v1', (req, res, next) => {
-    // Add the API key to the request before proxying
-    req.headers['authorization'] = 'Bearer ' + BP_API_KEY;
-    console.log('[Auth] Added Bearer token to /v1 request:', req.path);
-    next();
-  });
-}
-
-app.use('/v1', createProxyMiddleware({
-  target: 'https://api.blackpointcyber.com/v1',
+app.use('/api', createProxyMiddleware({
+  target: API_TARGET,
   changeOrigin: true,
-  logLevel: 'debug'
+  pathRewrite: (requestPath) => `/api${requestPath}`,
 }));
 
-// Optional backend proxies
-if (process.env.DEFENDER_XDR_PROXY_TARGET) {
-  app.use('/api/defender-xdr', createProxyMiddleware({
-    target: process.env.DEFENDER_XDR_PROXY_TARGET,
-    changeOrigin: true,
-  }));
-}
-if (process.env.O365_PROXY_TARGET) {
-  app.use('/api/o365', createProxyMiddleware({
-    target: process.env.O365_PROXY_TARGET,
-    changeOrigin: true,
-  }));
-}
-if (process.env.SENTINEL_PROXY_TARGET) {
-  app.use('/api/sentinel', createProxyMiddleware({
-    target: process.env.SENTINEL_PROXY_TARGET,
-    changeOrigin: true,
-  }));
-}
-if (process.env.DEFENDER_MCP_PROXY_TARGET) {
-  app.use('/api/defender-mcp', createProxyMiddleware({
-    target: process.env.DEFENDER_MCP_PROXY_TARGET,
-    changeOrigin: true,
-  }));
-}
-
-// API Routes — proxy /api/tenants/* to the full TypeScript backend on port 3001
-// Use pathFilter (not app.use path) so the full path is preserved when forwarding
-app.use(createProxyMiddleware({
-  pathFilter: '/api/tenants',
-  target: 'http://localhost:3001',
-  changeOrigin: true,
-}));
-
-// Top-level tenants list (served locally for tenant selector)
 app.get('/api/tenants-list', (req, res) => {
   res.json(tenants);
 });
 
-// Serve static files from the React build directory
+const v1ProxyOptions = {
+  target: process.env.BLACKPOINT_API_URL || 'https://api.blackpointcyber.com/v1',
+  changeOrigin: true,
+};
+
+if (BP_API_KEY) {
+  v1ProxyOptions.headers = { Authorization: `Bearer ${BP_API_KEY}` };
+}
+
+app.use('/v1', createProxyMiddleware(v1ProxyOptions));
+
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// SPA fallback
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(PORT, () => {
-  console.log('Dashboard running on port ' + PORT);
+  console.log(`Dashboard running on http://localhost:${PORT}`);
+  console.log(`Proxying unified API requests to ${API_TARGET}`);
   if (!BP_API_KEY) {
-    console.warn('WARNING: BLACKPOINT_API_KEY not set - API calls will fail');
+    console.warn('WARNING: BLACKPOINT_API_KEY not set - legacy /v1 API calls will fail');
   }
 });

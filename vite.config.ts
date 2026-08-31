@@ -53,6 +53,13 @@ export default defineConfig(({ mode }) => {
       '/v1': {
         target: env.BLACKPOINT_API_URL || 'https://api.blackpointcyber.com',
         changeOrigin: true,
+        // Attach the BP key here so it stays in the dev server, never the browser bundle.
+        configure: (proxy) => {
+          const key = env.COMPASSONE_API_KEY || env.BLACKPOINT_API_KEY;
+          proxy.on('proxyReq', (proxyReq) => {
+            if (key) proxyReq.setHeader('Authorization', `Bearer ${key}`);
+          });
+        },
       },
     },
   },

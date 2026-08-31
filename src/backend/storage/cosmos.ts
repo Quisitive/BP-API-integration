@@ -16,6 +16,8 @@ import type {
   DetectionCorrelation,
   CloseoutRecord,
   AlertSnapshot,
+  TrendSnapshot,
+  AfterActionReport,
 } from '../types.js';
 import type { CaseRepository } from './repository.js';
 import { toCaseRecord } from './repository.js';
@@ -28,6 +30,7 @@ const CONTAINERS = [
   'correlations',
   'closeouts',
   'alertSnapshots',
+  'afterActionReports',
 ] as const;
 
 export class CosmosCaseRepository implements CaseRepository {
@@ -252,6 +255,67 @@ export class CosmosCaseRepository implements CaseRepository {
       })
       .fetchAll();
     return resources as AlertSnapshot[];
+  }
+
+  // -- Trend Snapshots ------------------------------------------------------
+
+  async saveTrendSnapshot(snapshot: TrendSnapshot): Promise<void> {
+    const container = this.container('trendSnapshots');
+    await container.items.create({ ...snapshot });
+  }
+
+  async listTrendSnapshots(tenantAlias: string, limit = 500): Promise<TrendSnapshot[]> {
+    const container = this.container('trendSnapshots');
+    const { resources } = await container.items
+      .query({
+        query: 'SELECT * FROM c WHERE c.tenantAlias = @t ORDER BY c.capturedAt ASC OFFSET 0 LIMIT @l',
+        parameters: [
+          { name: '@t', value: tenantAlias },
+          { name: '@l', value: limit },
+        ],
+      })
+      .fetchAll();
+    return resources as TrendSnapshot[];
+  }
+
+  // -- After Action Reports -------------------------------------------------
+
+  async saveReport(report: AfterActionReport): Promise<void> {
+    const container = this.container('afterActionReports');
+    await container.items.upsert({ ...report, id: report.id });
+  }
+
+  async getReport(tenantAlias: string, reportId: string): Promise<AfterActionReport | null> {
+    const container = this.container('afterActionReports');
+    try {
+      const { resource } = await container.item(reportId, tenantAlias).read();
+      return (resource as AfterActionReport) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async listReports(tenantAlias: string, limit = 100): Promise<AfterActionReport[]> {
+    const container = this.container('afterActionReports');
+    const { resources } = await container.items
+      .query({
+        query: 'SELECT * FROM c WHERE c.tenantAlias = @t ORDER BY c.updatedAt DESC OFFSET 0 LIMIT @l',
+        parameters: [
+          { name: '@t', value: tenantAlias },
+          { name: '@l', value: limit },
+        ],
+      })
+      .fetchAll();
+    return resources as AfterActionReport[];
+  }
+
+  async deleteReport(tenantAlias: string, reportId: string): Promise<void> {
+    const container = this.container('afterActionReports');
+    try {
+      await container.item(reportId, tenantAlias).delete();
+    } catch {
+      // already gone
+    }
   }
 
   // -- Internal -------------------------------------------------------------

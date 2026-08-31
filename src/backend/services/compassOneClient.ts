@@ -127,6 +127,18 @@ export interface CompassOneClientOptions {
   apiKey?: string;
 }
 
+/** Error carrying the upstream CompassOne HTTP status and response body. */
+export class CompassOneApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly body?: string,
+  ) {
+    super(message);
+    this.name = 'CompassOneApiError';
+  }
+}
+
 export class CompassOneClient {
   private readonly baseUrl: string;
   private readonly apiKey: string;
@@ -303,8 +315,11 @@ export class CompassOneClient {
     const response = await fetch(url, { method: 'GET', headers });
 
     if (!response.ok) {
-      throw new Error(
+      const body = await response.text().catch(() => '');
+      throw new CompassOneApiError(
         `CompassOne API error: ${response.status} ${response.statusText} on GET ${path}`,
+        response.status,
+        body,
       );
     }
 
@@ -331,8 +346,11 @@ export class CompassOneClient {
     });
 
     if (!response.ok) {
-      throw new Error(
+      const body = await response.text().catch(() => '');
+      throw new CompassOneApiError(
         `CompassOne API error: ${response.status} ${response.statusText} on GET ${path}`,
+        response.status,
+        body,
       );
     }
 

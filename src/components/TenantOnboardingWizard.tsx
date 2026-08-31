@@ -48,11 +48,20 @@ const TenantOnboardingWizard: React.FC<Props> = ({ onCreated }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [existingTenants, setExistingTenants] = useState<TenantSummary[]>([]);
 
   const selectedBpTenant = useMemo(
     () => bpTenants.find(t => t.id === selectedBpCustomerId),
     [bpTenants, selectedBpCustomerId],
   );
+
+  // Match the typed alias against already-onboarded tenants so the wizard can
+  // update an existing tenant (e.g. add M365 secrets) instead of failing with 409.
+  const existingMatch = useMemo(
+    () => existingTenants.find(t => t.alias === normalizeAlias(alias)),
+    [existingTenants, alias],
+  );
+  const isUpdate = !!existingMatch;
 
   useEffect(() => {
     setLoadingBpTenants(true);
@@ -72,6 +81,15 @@ const TenantOnboardingWizard: React.FC<Props> = ({ onCreated }) => {
       })
       .catch((err) => setError((err as Error).message))
       .finally(() => setLoadingBpTenants(false));
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/onboarding/tenants')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: TenantSummary[]) =>
+        setExistingTenants(Array.isArray(data) ? data : []),
+      )
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -123,11 +141,16 @@ const TenantOnboardingWizard: React.FC<Props> = ({ onCreated }) => {
           : undefined,
       };
 
-      const res = await fetch('/api/onboarding/tenants', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        isUpdate
+          ? `/api/onboarding/tenants/${normalizedAlias}`
+          : '/api/onboarding/tenants',
+        {
+          method: isUpdate ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
+      );
 
       const body = (await res.json()) as TenantSummary & { error?: string; detail?: string };
 
@@ -135,7 +158,11 @@ const TenantOnboardingWizard: React.FC<Props> = ({ onCreated }) => {
         throw new Error(body.error || body.detail || `Onboarding failed (${res.status})`);
       }
 
-      setSuccess(`Tenant ${body.alias} onboarded successfully.`);
+      setExistingTenants(prev => {
+        const others = prev.filter(t => t.alias !== body.alias);
+        return [...others, body];
+      });
+      setSuccess(`Tenant ${body.alias} ${isUpdate ? 'updated' : 'onboarded'} successfully.`);
       onCreated(body);
     } catch (err) {
       setError((err as Error).message);
@@ -175,6 +202,14 @@ const TenantOnboardingWizard: React.FC<Props> = ({ onCreated }) => {
               required
             />
           </label>
+          {isUpdate && (
+            <div className="onboard-message onboard-info">
+              Tenant <strong>{existingMatch?.alias}</strong> is already onboarded
+              {existingMatch?.hasMicrosoft
+                ? ' (Microsoft configured). Submitting will update its settings.'
+                : ' without Microsoft. Fill in the Office 365 / Defender fields below to add M365, then submit to update it.'}
+            </div>
+          )}
           <label>
             Primary analyst (optional)
             <input
@@ -296,7 +331,13 @@ const TenantOnboardingWizard: React.FC<Props> = ({ onCreated }) => {
 
         <div className="onboard-actions">
           <button type="submit" disabled={submitting}>
-            {submitting ? 'Onboarding…' : 'Create Tenant'}
+            {submitting
+              ? isUpdate
+                ? 'Updating…'
+                : 'Onboarding…'
+              : isUpdate
+                ? 'Update Tenant'
+                : 'Create Tenant'}
           </button>
         </div>
       </form>

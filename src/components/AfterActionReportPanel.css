@@ -1,0 +1,105 @@
+/* ---------------------------------------------------------------------------
+   After Action Report Panel
+   --------------------------------------------------------------------------- */
+
+.aar-panel { padding: 1rem; }
+
+.aar-header h2 { margin: 0 0 0.25rem; color: #1b2a3a; }
+.aar-subtitle { margin: 0 0 1rem; color: #6c757d; font-size: 0.9rem; max-width: 800px; }
+
+.aar-banner { padding: 0.5rem 0.75rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.88rem; }
+.aar-error { color: #c0392b; background: #fdecea; }
+.aar-notice { color: #1d6f42; background: #e7f6ec; }
+
+.aar-layout { display: grid; grid-template-columns: 320px 1fr; gap: 1.25rem; align-items: start; }
+@media (max-width: 960px) { .aar-layout { grid-template-columns: 1fr; } }
+
+/* -------- Sidebar -------- */
+.aar-sidebar { display: flex; flex-direction: column; gap: 1.25rem; }
+.aar-generate, .aar-saved {
+  border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.9rem; background: #fbfcfe;
+}
+.aar-generate h3, .aar-saved h3 { margin: 0 0 0.6rem; font-size: 0.95rem; color: #1b2a3a; }
+
+.aar-field { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.6rem; }
+.aar-field > span { font-size: 0.8rem; font-weight: 600; color: #475467; }
+.aar-field input, .aar-field textarea {
+  padding: 0.4rem 0.6rem; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.85rem; width: 100%;
+  font-family: inherit; box-sizing: border-box;
+}
+.aar-field textarea { resize: vertical; }
+
+.aar-select-group { margin-bottom: 0.6rem; }
+.aar-select-label { font-size: 0.8rem; font-weight: 600; color: #475467; display: block; margin-bottom: 0.25rem; }
+.aar-checklist { max-height: 160px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 4px; padding: 0.4rem; background: #fff; }
+.aar-check { display: flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0; font-size: 0.82rem; cursor: pointer; }
+.aar-check-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.aar-btn {
+  padding: 0.4rem 0.8rem; border: 1px solid #cbd5e1; background: #fff; border-radius: 4px; cursor: pointer;
+  font-weight: 600; font-size: 0.82rem; color: #1b2a3a; text-decoration: none; display: inline-block;
+}
+.aar-btn:hover { background: #f1f5f9; }
+.aar-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.aar-btn-primary { background: #2980b9; color: #fff; border-color: #2980b9; width: 100%; }
+.aar-btn-primary:hover { background: #216a9c; }
+.aar-btn-icon { border: none; background: transparent; color: #b42318; font-size: 1.1rem; cursor: pointer; line-height: 1; padding: 0 0.3rem; }
+
+.aar-saved ul { list-style: none; margin: 0; padding: 0; }
+.aar-saved li { display: flex; align-items: center; gap: 0.25rem; border-bottom: 1px solid #eef2f6; }
+.aar-saved li.active { background: #eef5fb; border-radius: 4px; }
+.aar-report-link { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; background: none; border: none; cursor: pointer; padding: 0.45rem 0.3rem; text-align: left; }
+.aar-report-title { font-size: 0.85rem; font-weight: 600; color: #1b2a3a; }
+.aar-report-date { font-size: 0.72rem; }
+
+/* -------- Editor -------- */
+.aar-editor { border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem 1.25rem; background: #fff; min-height: 300px; }
+.aar-empty { color: #6c757d; text-align: center; padding: 3rem 1rem; }
+
+.aar-editor-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #eef2f6; }
+.aar-editor-meta { display: flex; align-items: center; gap: 0.5rem; }
+.aar-editor-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+.aar-section { margin: 1rem 0; }
+.aar-section h4 { margin: 0 0 0.4rem; font-size: 0.9rem; color: #1b2a3a; }
+.aar-section-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.aar-inline-check { font-size: 0.82rem; color: #475467; display: flex; align-items: center; gap: 0.35rem; }
+
+.aar-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 0.35rem; }
+.aar-table th, .aar-table td { border: 1px solid #e2e8f0; padding: 0.4rem 0.5rem; text-align: left; vertical-align: top; }
+.aar-table th { background: #f2f6fb; color: #334155; }
+
+.aar-actions-table select { padding: 0.25rem; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.8rem; }
+.aar-cell-input { width: 100%; padding: 0.3rem 0.4rem; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.82rem; box-sizing: border-box; font-family: inherit; }
+.aar-cell-textarea { width: 100%; margin-top: 0.3rem; padding: 0.3rem 0.4rem; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.8rem; box-sizing: border-box; resize: vertical; font-family: inherit; min-height: 34px; }
+
+.aar-asset-list { margin: 0.2rem 0; padding-left: 1.2rem; font-size: 0.85rem; }
+.aar-timeline { list-style: none; margin: 0; padding: 0; font-size: 0.82rem; }
+.aar-timeline li { display: flex; gap: 0.5rem; padding: 0.25rem 0; border-bottom: 1px solid #f1f5f9; align-items: baseline; }
+.aar-ts { color: #64748b; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.aar-src { font-size: 0.7rem; font-weight: 700; padding: 0.05rem 0.35rem; border-radius: 3px; text-transform: uppercase; }
+.aar-src-blackpoint { background: #101828; color: #fff; }
+.aar-src-defender-xdr { background: #eaf2fb; color: #1a5aa0; }
+
+.aar-muted { color: #94a3b8; font-size: 0.82rem; }
+
+/* Status + severity badges */
+.aar-status { font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.45rem; border-radius: 3px; text-transform: uppercase; }
+.aar-status-draft { background: #fef3c7; color: #92610a; }
+.aar-status-final { background: #dcfce7; color: #166534; }
+
+.aar-sev { font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.45rem; border-radius: 3px; }
+.aar-sev.sev-Critical { background: #fde2e0; color: #b42318; }
+.aar-sev.sev-High { background: #fdeede; color: #b54708; }
+.aar-sev.sev-Medium { background: #fef7d6; color: #8a6d0b; }
+.aar-sev.sev-Low { background: #e6f0fb; color: #1a5aa0; }
+.aar-sev.sev-Informational { background: #eef2f6; color: #475467; }
+
+.aar-risk-flag { font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.45rem; border-radius: 3px; background: #fde2e0; color: #b42318; }
+
+/* Priority row tints */
+tr.prio-P1 td:first-child { color: #b42318; font-weight: 700; }
+tr.prio-P2 td:first-child { color: #b54708; font-weight: 700; }
+tr.prio-P1 { background: #fff6f5; }
+tr.prio-P2 { background: #fffaf3; }

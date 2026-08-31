@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blackpoint API to SOC 365 Dashboard Integration - Client Onboarding Permissions and Roles</title>
+  <style>
+    :root {
+      --ink: #17212f;
+      --muted: #5a6472;
+      --line: #d7dde6;
+      --panel: #f6f8fb;
+      --accent: #0f6c81;
+      --accent-dark: #0a4b5a;
+      --warning-bg: #fff7e6;
+      --warning-line: #d28a00;
+      --success-bg: #edf7f2;
+      --success-line: #2f8f5b;
+      --code-bg: #edf1f5;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #ffffff;
+      font-family: "Segoe UI", "Aptos", sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 40px 0 64px;
+    }
+
+    header {
+      border-bottom: 4px solid var(--accent);
+      margin-bottom: 28px;
+      padding-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 36px 0 12px;
+      color: var(--accent-dark);
+      font-size: 1.45rem;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 24px 0 10px;
+      font-size: 1.1rem;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    a {
+      color: var(--accent-dark);
+    }
+
+    code {
+      background: var(--code-bg);
+      border-radius: 4px;
+      padding: 0.12rem 0.3rem;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      overflow-x: auto;
+      background: #111827;
+      color: #f8fafc;
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 0.9rem;
+    }
+
+    pre code {
+      background: transparent;
+      padding: 0;
+      color: inherit;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      font-size: 0.95rem;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--panel);
+      color: #263345;
+      font-weight: 700;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 18px 1.25rem;
+      padding: 0;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    .summary {
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 880px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .tag {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: #334155;
+      background: #ffffff;
+      font-size: 0.9rem;
+    }
+
+    .callout {
+      border-left: 5px solid var(--accent);
+      background: var(--panel);
+      padding: 14px 16px;
+      margin: 18px 0 22px;
+    }
+
+    .callout strong {
+      color: var(--accent-dark);
+    }
+
+    .callout.optional {
+      border-left-color: var(--warning-line);
+      background: var(--warning-bg);
+    }
+
+    .callout.baseline {
+      border-left-color: var(--success-line);
+      background: var(--success-bg);
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin: 20px 0 8px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #ffffff;
+    }
+
+    .panel h3 {
+      margin-top: 0;
+      color: var(--accent-dark);
+    }
+
+    .approval-lines {
+      list-style: none;
+      margin-left: 0;
+    }
+
+    .approval-lines li {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 0;
+    }
+
+    .approval-lines li::before {
+      content: "[ ]";
+      margin-right: 8px;
+      color: var(--accent-dark);
+      font-weight: 700;
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      margin-top: 40px;
+      padding-top: 18px;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100% - 28px, 1120px);
+        padding-top: 28px;
+      }
+
+      .section-grid {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+    }
+
+    @media print {
+      body {
+        color: #000000;
+      }
+
+      main {
+        width: 100%;
+        padding: 0;
+      }
+
+      header,
+      section,
+      footer {
+        break-inside: avoid;
+      }
+
+      a {
+        color: #000000;
+        text-decoration: none;
+      }
+
+      pre {
+        border: 1px solid #888888;
+        color: #000000;
+        background: #ffffff;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Blackpoint API to SOC 365 Dashboard Integration - Client Onboarding Permissions and Roles</h1>
+      <p class="summary">Use this checklist before configuring a client tenant for the Unified SOC Command Dashboard and the related SecOps O365 Command Dashboard integration.</p>
+      <div class="meta" aria-label="Document metadata">
+        <span class="tag">Prepared for client onboarding</span>
+        <span class="tag">Updated 2026-07-23</span>
+        <span class="tag">MCP remediation optional</span>
+      </div>
+    </header>
+
+    <section>
+      <h2>Scope</h2>
+      <p>The integrated platform can connect to these provider surfaces for each client.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Surface</th>
+            <th>Required for</th>
+            <th>Client approval needed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Blackpoint CompassOne</td>
+            <td>Managed tenant lookup, detections, alert groups, analytics, reports, and assets.</td>
+            <td>Blackpoint API access for the client's customer or tenant ID.</td>
+          </tr>
+          <tr>
+            <td>Microsoft Graph Security</td>
+            <td>Incident list, incident detail, alert metadata, evidence links, and optional incident writeback.</td>
+            <td>Microsoft Entra app registration with Microsoft Graph application permissions and admin consent.</td>
+          </tr>
+          <tr>
+            <td>Defender XDR API</td>
+            <td>SecOps O365 Command Dashboard incident synchronization and case writeback.</td>
+            <td>Defender XDR application permissions for <code>api.security.microsoft.com</code>.</td>
+          </tr>
+          <tr>
+            <td>Defender Response MCP bridge</td>
+            <td>Optional future or advanced approved remediation execution.</td>
+            <td>Not required for initial onboarding. Grant action-specific permissions only if MCP remediation is explicitly enabled.</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout baseline">
+        <strong>Baseline onboarding:</strong> Blackpoint-only onboarding is supported. Microsoft Defender XDR can be added later by updating the tenant entry. MCP remediation components are optional and should not block client onboarding.
+      </div>
+    </section>
+
+    <section>
+      <h2>Information to Collect</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Required</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Client display name</td>
+            <td>Yes</td>
+            <td>Human-readable name shown in the dashboard.</td>
+          </tr>
+          <tr>
+            <td>Tenant alias</td>
+            <td>Yes</td>
+            <td>Lowercase URL-safe alias, for example <code>contoso-health</code>.</td>
+          </tr>
+          <tr>
+            <td>Primary SOC analyst</td>
+            <td>Recommended</td>
+            <td>Used for ownership and operations tracking.</td>
+          </tr>
+          <tr>
+            <td>Blackpoint customer ID</td>
+            <td>Yes for Blackpoint integration</td>
+            <td>UUID from CompassOne <code>/v1/tenants</code>; selected in the onboarding wizard when account-level access is available.</td>
+          </tr>
+          <tr>
+            <td>Microsoft Entra tenant ID</td>
+            <td>Yes for Defender XDR integration</td>
+            <td>Directory tenant ID for the client.</td>
+          </tr>
+          <tr>
+            <td>Entra application client ID</td>
+            <td>Yes for Defender XDR integration</td>
+            <td>App registration used by the backend client-credentials flow.</td>
+          </tr>
+          <tr>
+            <td>Entra application client secret</td>
+            <td>Yes for Defender XDR integration</td>
+            <td>Store as an environment variable or secret reference, not directly in source control.</td>
+          </tr>
+          <tr>
+            <td>Defender XDR API host</td>
+            <td>Required for SecOps O365 dashboard incident collection</td>
+            <td>Usually <code>https://api.security.microsoft.com</code>; may vary for sovereign or regional deployments.</td>
+          </tr>
+          <tr>
+            <td>Enabled Defender workloads</td>
+            <td>Recommended</td>
+            <td>Defaults can include <code>DefenderXdr</code> and <code>DefenderForOffice365</code>; add others only when used by the client.</td>
+          </tr>
+          <tr>
+            <td>MCP remediation bridge URL and signing secret</td>
+            <td>Optional</td>
+            <td>Collect only if the client approves automated remediation dispatch. Not needed for read-only dashboards, triage, case tracking, or manual response workflows.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Blackpoint CompassOne Permissions</h2>
+      <p>The backend authenticates to CompassOne with a bearer API key and scopes tenant requests with the client's <code>x-tenant-id</code> customer ID header.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th>API usage</th>
+            <th>Permission needed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Tenant selection during onboarding</td>
+            <td><code>GET /v1/tenants</code></td>
+            <td>Account-level permission to list managed tenants.</td>
+          </tr>
+          <tr>
+            <td>Detection dashboard</td>
+            <td><code>GET /v1/alert-groups</code>, <code>GET /v1/alert-groups/{id}</code>, <code>GET /v1/alert-groups/{id}/alerts</code></td>
+            <td>Read access to alert groups and alerts for the client tenant.</td>
+          </tr>
+          <tr>
+            <td>Detection analytics</td>
+            <td><code>GET /v1/alert-groups/count</code>, <code>/alert-groups-by-week</code>, <code>/top-detections-by-entity</code>, <code>/top-detections-by-threat</code></td>
+            <td>Read access to alert group analytics.</td>
+          </tr>
+          <tr>
+            <td>Reports</td>
+            <td><code>GET /v1/reports</code>, <code>/reports/{id}/url</code>, <code>/reports/{id}/json</code></td>
+            <td>Read access to report runs and report content.</td>
+          </tr>
+          <tr>
+            <td>Assets</td>
+            <td><code>GET /v1/assets</code></td>
+            <td>Read access to asset inventory.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h3>Credential handling</h3>
+      <ul>
+        <li>Prefer one account-level <code>COMPASSONE_API_KEY</code> held by the backend when it is approved for all onboarded clients.</li>
+        <li>Use a tenant-specific <code>blackpoint.apiKeyOverride</code> only when the client requires a separate key.</li>
+        <li>Do not place CompassOne API keys in frontend <code>REACT_APP_*</code> or <code>VITE_*</code> variables.</li>
+        <li>Rotate the API key immediately if it is pasted into chat, committed, or shared outside the approved secret store.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Microsoft Defender XDR and O365 Dashboard Permissions</h2>
+      <p>The backends use Microsoft Entra client credentials for each client tenant. Configure an app registration in the client's Entra tenant and grant application permissions with admin consent.</p>
+
+      <h3>Minimum Microsoft Graph permissions by mode</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Mode</th>
+            <th>Microsoft Graph application permissions</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Read-only Defender XDR</td>
+            <td><code>SecurityIncident.Read.All</code></td>
+            <td>List and read Defender XDR incidents.</td>
+          </tr>
+          <tr>
+            <td>Read-only with alert evidence links</td>
+            <td><code>SecurityIncident.Read.All</code>, <code>SecurityAlert.Read.All</code></td>
+            <td>Read incidents and related alert metadata used for evidence and deep-link navigation.</td>
+          </tr>
+          <tr>
+            <td>Incident writeback enabled</td>
+            <td><code>SecurityIncident.ReadWrite.All</code>, <code>SecurityAlert.Read.All</code></td>
+            <td>Update incident assignment, status, classification, determination, and tags; continue reading alert metadata.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Admin consent is required for these application permissions. <code>SecurityIncident.Read.All</code> is the least-privileged application permission for listing incidents, while <code>SecurityIncident.ReadWrite.All</code> is required when write operations are enabled.</p>
+
+      <h3>Additional SecOps O365 Command Dashboard permissions</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Mode</th>
+            <th>Defender XDR API application permission</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Continuous incident collection</td>
+            <td><code>Incident.Read.All</code></td>
+            <td>Read the incident queue from <code>api.security.microsoft.com</code> for tenant synchronization.</td>
+          </tr>
+          <tr>
+            <td>Case writeback to Defender XDR</td>
+            <td><code>Incident.ReadWrite.All</code></td>
+            <td>Assign case owner, update status, and add investigation notes or comments where supported.</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <strong>Recommended permission sets:</strong> For read-only incident visibility across both dashboards, approve <code>SecurityIncident.Read.All</code>, <code>SecurityAlert.Read.All</code>, and <code>Incident.Read.All</code>. For writeback, approve <code>SecurityIncident.ReadWrite.All</code>, <code>SecurityAlert.Read.All</code>, and <code>Incident.ReadWrite.All</code>.
+      </div>
+
+      <h3>Current writeback fields</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Writeback field</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>assignedTo</code></td>
+            <td>Assign an incident owner.</td>
+          </tr>
+          <tr>
+            <td><code>status</code></td>
+            <td>Move incidents through active, in-progress, resolved, or redirected states.</td>
+          </tr>
+          <tr>
+            <td><code>classification</code></td>
+            <td>Record true positive, false positive, or related classification decisions where supported.</td>
+          </tr>
+          <tr>
+            <td><code>determination</code></td>
+            <td>Record incident determination where supported.</td>
+          </tr>
+          <tr>
+            <td><code>customTags</code></td>
+            <td>Add tags for SOC workflow tracking.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Do not grant broader Microsoft Graph permissions such as <code>Directory.Read.All</code>, <code>User.Read.All</code>, <code>Mail.ReadWrite</code>, or device action permissions unless a future feature explicitly requires them.</p>
+    </section>
+
+    <section>
+      <h2>Installation and Human Operator Roles</h2>
+      <p>Use least privilege for tenant installation and ongoing SOC operations.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>Recommended role</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Create app registration or enterprise app</td>
+            <td>Application Administrator or Cloud Application Administrator</td>
+            <td>Global Administrator can also perform this but is broader than needed.</td>
+          </tr>
+          <tr>
+            <td>Configure app credentials</td>
+            <td>Application Administrator or app owner</td>
+            <td>Prefer certificate credentials in production; client secrets are acceptable for initial setup.</td>
+          </tr>
+          <tr>
+            <td>Grant tenant-wide admin consent</td>
+            <td>Global Administrator, or Cloud/Application Administrator where tenant policy allows</td>
+            <td>Required for application permissions.</td>
+          </tr>
+          <tr>
+            <td>Verify SOC operator access in Defender portal</td>
+            <td>Security Administrator or Security Operator</td>
+            <td>Needed for human investigation workflow validation.</td>
+          </tr>
+          <tr>
+            <td>View incidents and evidence in portal</td>
+            <td>Security Reader or Security Operator</td>
+            <td>Applies to analysts opening dashboard deep links.</td>
+          </tr>
+          <tr>
+            <td>Investigate and respond in portal</td>
+            <td>Security Operator</td>
+            <td>Required for hands-on portal response.</td>
+          </tr>
+          <tr>
+            <td>Change security policy or workload configuration</td>
+            <td>Security Administrator</td>
+            <td>Do not grant for routine dashboard usage.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Entra App Registration Setup</h2>
+      <ol>
+        <li>Create or identify an Entra app registration dedicated to this integration.</li>
+        <li>Add Microsoft Graph and Defender XDR API application permissions for the selected mode above.</li>
+        <li>Have a tenant administrator grant admin consent.</li>
+        <li>Create a client secret or certificate credential.</li>
+        <li>Provide the tenant ID, client ID, and secret reference to the onboarding operator.</li>
+        <li>Store the secret in <code>.env</code>, a deployment secret store, or a future Key Vault reference; use <code>${ENV_VAR_NAME}</code> in <code>config/tenants.json</code>.</li>
+      </ol>
+
+      <h3>Recommended environment variable pattern</h3>
+      <pre><code>CLIENT_ALIAS_MS_CLIENT_SECRET=secret-value</code></pre>
+
+      <h3>Example tenant entry shape</h3>
+      <pre><code>{
+  "alias": "client-alias",
+  "displayName": "Client Name",
+  "blackpoint": {
+    "customerId": "blackpoint-customer-uuid"
+  },
+  "microsoft": {
+    "tenantId": "client-entra-tenant-id",
+    "clientId": "app-registration-client-id",
+    "clientSecret": "${CLIENT_ALIAS_MS_CLIENT_SECRET}",
+    "securityApiHost": "https://api.security.microsoft.com",
+    "enabledWorkloads": ["DefenderXdr", "DefenderForOffice365"]
+  },
+  "enabled": true
+}</code></pre>
+    </section>
+
+    <section>
+      <h2>Network and Portal Access</h2>
+      <p>The workstation or hosting environment running the backend needs outbound HTTPS access to these destinations.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Destination</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>https://api.blackpointcyber.com</code></td>
+            <td>CompassOne API calls.</td>
+          </tr>
+          <tr>
+            <td><code>https://login.microsoftonline.com</code></td>
+            <td>Entra token acquisition.</td>
+          </tr>
+          <tr>
+            <td><code>https://graph.microsoft.com</code></td>
+            <td>Microsoft Graph Security API.</td>
+          </tr>
+          <tr>
+            <td><code>https://api.security.microsoft.com</code></td>
+            <td>Optional Defender security API host when configured for a tenant.</td>
+          </tr>
+          <tr>
+            <td><code>https://security.microsoft.com</code></td>
+            <td>Analyst portal deep links opened from the dashboard.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Analysts who open Defender portal links need the appropriate interactive Defender portal role in the client tenant, such as Security Reader, Security Operator, Security Administrator, or another role approved by the client.</p>
+    </section>
+
+    <section>
+      <h2>Optional MCP Remediation Components</h2>
+      <div class="callout optional">
+        <strong>MCP remediation is optional at this stage.</strong> The dashboards can onboard clients, collect incidents, show evidence links, support triage, create remediation proposals, and track approvals without any MCP bridge configuration or action permissions.
+      </div>
+      <p>Only enable the MCP automation bridge after the client separately approves automated remediation dispatch. No remediation action should run without explicit analyst approval.</p>
+
+      <h3>Bridge settings if approved</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Setting</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>MCP_AUTOMATION_WEBHOOK_URL</code></td>
+            <td>Target endpoint for approved remediation operations.</td>
+          </tr>
+          <tr>
+            <td><code>MCP_AUTOMATION_WEBHOOK_SECRET</code></td>
+            <td>HMAC signing secret for webhook integrity.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Action-specific permissions, only when separately approved</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Remediation capability</th>
+            <th>Example permission or API scope</th>
+            <th>Approval guidance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Device isolation</td>
+            <td><code>Machine.Isolate</code> for Defender for Endpoint API</td>
+            <td>Approve only if analysts may isolate devices through the bridge.</td>
+          </tr>
+          <tr>
+            <td>Device release from isolation</td>
+            <td>Defender for Endpoint machine action permission required by the bridge implementation</td>
+            <td>Pair with isolation only when release workflows are enabled.</td>
+          </tr>
+          <tr>
+            <td>Antivirus scan</td>
+            <td><code>Machine.Scan</code> for Defender for Endpoint API</td>
+            <td>Approve only if analysts may trigger AV scans.</td>
+          </tr>
+          <tr>
+            <td>Advanced endpoint lookups</td>
+            <td><code>Machine.Read.All</code>, <code>Alert.Read.All</code></td>
+            <td>Use when remediation proposals require endpoint or alert enrichment beyond incident data.</td>
+          </tr>
+          <tr>
+            <td>Identity or session response</td>
+            <td>Action-specific Microsoft Graph or identity permissions</td>
+            <td>Define per action, for example session revocation or password reset, before requesting consent.</td>
+          </tr>
+          <tr>
+            <td>Mail purge or email remediation</td>
+            <td>Action-specific Exchange Online or Defender for Office 365 permissions</td>
+            <td>Define per action, for example purge or message remediation, before requesting consent.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p><strong>Baseline onboarding recommendation:</strong> leave <code>MCP_AUTOMATION_WEBHOOK_URL</code> and <code>MCP_AUTOMATION_WEBHOOK_SECRET</code> unset. Perform response actions manually in the client-approved portals until MCP remediation is formally approved.</p>
+    </section>
+
+    <section>
+      <h2>Validation Checklist</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>Expected result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>GET /api/tenants</code></td>
+            <td>Client appears with <code>enabled: true</code>.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/tenants/:alias/bp/analytics/count?status=OPEN</code></td>
+            <td>Returns a count, or a clear CompassOne permission error.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/tenants/:alias/bp/detections?status=OPEN</code></td>
+            <td>Returns open detections for Blackpoint-enabled clients.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/tenants/:alias/xdr/incidents?top=5</code></td>
+            <td>Returns recent Defender XDR incidents for Microsoft-enabled clients.</td>
+          </tr>
+          <tr>
+            <td><code>GET /api/tenants/{tenantAlias}/incidents?top=5</code> in the SecOps O365 dashboard</td>
+            <td>Returns recent Defender XDR incidents through the O365 dashboard API.</td>
+          </tr>
+          <tr>
+            <td>Open incident evidence links</td>
+            <td>Analyst can open <code>security.microsoft.com</code> links with their own portal permissions.</td>
+          </tr>
+          <tr>
+            <td>Incident writeback test</td>
+            <td>Only run when <code>SecurityIncident.ReadWrite.All</code> was approved; update a test incident and confirm the change in Defender.</td>
+          </tr>
+          <tr>
+            <td>O365 dashboard writeback test</td>
+            <td>Only run when <code>Incident.ReadWrite.All</code> was approved; update a controlled test incident or case field and confirm the change in Defender.</td>
+          </tr>
+          <tr>
+            <td>Optional MCP remediation bridge test</td>
+            <td>Skip for baseline onboarding. Only run when bridge action permissions were separately approved; create a low-risk proposal and verify approval, signing, dispatch, and audit logging.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Common Onboarding Failures</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Symptom</th>
+            <th>Likely cause</th>
+            <th>Fix</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>CompassOne returns <code>401 Unauthorized</code></td>
+            <td>Missing, expired, or unauthorized CompassOne API key.</td>
+            <td>Verify <code>COMPASSONE_API_KEY</code> or tenant <code>apiKeyOverride</code>; confirm the key is approved for the client customer ID.</td>
+          </tr>
+          <tr>
+            <td>CompassOne returns tenant-specific failures</td>
+            <td>Wrong Blackpoint customer ID.</td>
+            <td>Re-select the customer from <code>/v1/tenants</code> or confirm the UUID with Blackpoint.</td>
+          </tr>
+          <tr>
+            <td>Defender token acquisition fails</td>
+            <td>Wrong tenant ID, client ID, secret, or expired secret.</td>
+            <td>Recreate the app credential and update the secret store.</td>
+          </tr>
+          <tr>
+            <td>Defender API returns <code>403 Forbidden</code></td>
+            <td>Missing Graph application permission or admin consent.</td>
+            <td>Add the required application permissions and grant admin consent.</td>
+          </tr>
+          <tr>
+            <td>Incidents load but writeback fails</td>
+            <td>App has read-only incident permission.</td>
+            <td>Add and consent <code>SecurityIncident.ReadWrite.All</code>, or disable writeback for that client.</td>
+          </tr>
+          <tr>
+            <td>O365 dashboard incidents fail while Graph incidents work</td>
+            <td>Missing Defender XDR API permission such as <code>Incident.Read.All</code>, wrong <code>securityApiHost</code>, or API host blocked.</td>
+            <td>Add and consent the Defender XDR API permission and confirm outbound access to <code>api.security.microsoft.com</code>.</td>
+          </tr>
+          <tr>
+            <td>O365 dashboard writeback fails</td>
+            <td>Missing <code>Incident.ReadWrite.All</code> for the Defender XDR API.</td>
+            <td>Add and consent <code>Incident.ReadWrite.All</code>, or disable O365 dashboard writeback.</td>
+          </tr>
+          <tr>
+            <td>Optional remediation bridge approval succeeds but execution fails</td>
+            <td>Missing action-specific permission on the bridge service principal or webhook signing/configuration issue.</td>
+            <td>Confirm MCP remediation is enabled, confirm the bridge credential has only the approved action scopes, and verify <code>MCP_AUTOMATION_WEBHOOK_URL</code> and <code>MCP_AUTOMATION_WEBHOOK_SECRET</code>.</td>
+          </tr>
+          <tr>
+            <td>Portal links fail for an analyst</td>
+            <td>Analyst lacks interactive Defender portal access.</td>
+            <td>Assign an approved Defender or Entra security role for portal use.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Client Approval Summary</h2>
+      <p>Before enabling production access, record approval for the following items.</p>
+      <ul class="approval-lines">
+        <li>Blackpoint CompassOne tenant read access for detections, reports, assets, and analytics.</li>
+        <li>Microsoft Graph application permissions selected for the client's mode.</li>
+        <li>Defender XDR API application permissions selected for SecOps O365 dashboard collection and writeback.</li>
+        <li>Admin consent owner and date.</li>
+        <li>Secret storage location and rotation owner.</li>
+        <li>Whether incident writeback is approved.</li>
+        <li>Whether optional MCP remediation is out of scope for baseline onboarding, or explicitly approved with the exact action-specific permissions granted.</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p>Source document: <code>docs/client-onboarding-permissions.md</code>. This HTML version is intended for client review, print, or PDF export.</p>
+    </footer>
+  </main>
+</body>
+</html>

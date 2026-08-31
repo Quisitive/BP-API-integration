@@ -5,6 +5,7 @@
   "description": "Unified SOC Command Dashboard — Blackpoint + Microsoft Defender XDR Integration",
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dashboard": "npm run dev",
     "dev:client": "vite",
     "dev:server": "tsx watch src/backend/server.ts",
     "build": "npm run build:client && npm run build:server",

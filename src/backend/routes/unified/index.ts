@@ -10,6 +10,7 @@ import triageRouter from './triage.js';
 import correlationsRouter from './correlations.js';
 import closeoutsRouter from './closeouts.js';
 import auditRouter from './audit.js';
+import reportsRouter from './reports.js';
 
 const router = Router({ mergeParams: true });
 
@@ -18,5 +19,6 @@ router.use('/triage', triageRouter);
 router.use('/correlations', correlationsRouter);
 router.use('/closeouts', closeoutsRouter);
 router.use('/audit', auditRouter);
+router.use('/reports', reportsRouter);
 
 export default router;

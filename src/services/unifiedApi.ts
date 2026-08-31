@@ -50,6 +50,80 @@ export function bpTopThreats(alias: string, top = 10) {
   return apiFetch<unknown[]>(`${BASE}/${alias}/bp/analytics/top-threats?top=${top}`);
 }
 
+export interface AlertTypeInsight {
+  alertType: string;
+  total: number;
+  truePositive: number;
+  falsePositive: number;
+  benign: number;
+  duplicate: number;
+  informational: number;
+  other: number;
+  noise: number;
+  fpRate: number;
+  noiseRate: number;
+  avgMttrHours: number | null;
+  isTuningCandidate: boolean;
+}
+
+export interface TuningInsights {
+  generatedAt: string;
+  totalCloseouts: number;
+  overall: {
+    truePositive: number;
+    falsePositive: number;
+    benign: number;
+    duplicate: number;
+    informational: number;
+    other: number;
+    fpRate: number;
+    noiseRate: number;
+    avgMttrHours: number | null;
+  };
+  dispositionSummary: { disposition: string; count: number }[];
+  byAlertType: AlertTypeInsight[];
+  tuningCandidates: AlertTypeInsight[];
+  mttrByType: { alertType: string; avgMttrHours: number }[];
+  thresholds: { minSample: number; noiseRateThreshold: number };
+}
+
+export function bpTuningInsights(alias: string) {
+  return apiFetch<TuningInsights>(`${BASE}/${alias}/bp/analytics/tuning-insights`);
+}
+
+export interface TrendSnapshot {
+  id: string;
+  tenantAlias: string;
+  capturedAt: string;
+  openDetections: number;
+  resolvedDetections: number;
+  totalDetections: number;
+  closeoutCount: number;
+  dispositionCounts: Record<string, number>;
+}
+
+export function bpSnapshots(alias: string, limit = 500) {
+  return apiFetch<TrendSnapshot[]>(`${BASE}/${alias}/bp/analytics/snapshots?limit=${limit}`);
+}
+
+export function bpCaptureSnapshot(alias: string) {
+  return apiFetch<TrendSnapshot>(`${BASE}/${alias}/bp/analytics/snapshots`, { method: 'POST' });
+}
+
+export interface CorrelationTrends {
+  generatedAt: string;
+  totalCorrelations: number;
+  distinctBpDetections: number;
+  distinctXdrIncidents: number;
+  avgConfidence: number;
+  byWeek: { week: string; count: number }[];
+  byType: { type: string; count: number }[];
+}
+
+export function correlationTrends(alias: string) {
+  return apiFetch<CorrelationTrends>(`${BASE}/${alias}/unified/correlations/trends`);
+}
+
 export function bpReports(alias: string) {
   return apiFetch<unknown[]>(`${BASE}/${alias}/bp/reports`);
 }
@@ -166,6 +240,9 @@ export interface CloseoutRecord {
   closedAt: string;
   resolution: string;
   notes?: string;
+  disposition?: string;
+  alertTypes?: string[];
+  detectionCreatedAt?: string;
 }
 
 export interface AuditEvent {
@@ -251,4 +328,110 @@ export function triageRecommend(alias: string, context: { title: string; severit
     method: 'POST',
     body: JSON.stringify(context),
   });
+}
+
+// ---------------------------------------------------------------------------
+// After Action Reports (Incident Case Write-Up)
+// ---------------------------------------------------------------------------
+
+export type RemediationPriority = 'P1' | 'P2' | 'P3' | 'P4';
+export type RemediationActionStatus = 'open' | 'in-progress' | 'completed' | 'not-needed';
+export type AarStatus = 'draft' | 'final';
+
+export interface RemediationAction {
+  id: string;
+  title: string;
+  description: string;
+  owner: string;
+  timeline: string;
+  priority: RemediationPriority;
+  status: RemediationActionStatus;
+  source: 'auto' | 'analyst';
+  riskLevel?: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export interface AarSourceRef {
+  system: 'blackpoint' | 'defender-xdr';
+  kind: 'incident' | 'detection' | 'alert';
+  id: string;
+  title?: string;
+  severity?: string;
+  status?: string;
+  createdAt?: string;
+}
+
+export interface AarTimelineEntry {
+  timestamp: string;
+  source: 'blackpoint' | 'defender-xdr';
+  label: string;
+  detail?: string;
+}
+
+export interface AfterActionReport {
+  id: string;
+  tenantAlias: string;
+  title: string;
+  status: AarStatus;
+  authoredBy: string;
+  createdAt: string;
+  updatedAt: string;
+  severity: string;
+  sources: AarSourceRef[];
+  timeline: AarTimelineEntry[];
+  impactedAssets: string[];
+  executiveSummary: string;
+  detectionSummary: string;
+  investigationFindings: string;
+  containmentActions: string;
+  rootCause: string;
+  lessonsLearned: string;
+  remediationActions: RemediationAction[];
+  outstandingRisk: boolean;
+}
+
+export interface GenerateAarRequest {
+  title?: string;
+  authoredBy: string;
+  xdrIncidentIds?: string[];
+  bpDetectionIds?: string[];
+}
+
+export function listReports(alias: string, limit = 50) {
+  return apiFetch<AfterActionReport[]>(`${BASE}/${alias}/unified/reports?limit=${limit}`);
+}
+
+export function getReport(alias: string, reportId: string) {
+  return apiFetch<AfterActionReport>(`${BASE}/${alias}/unified/reports/${reportId}`);
+}
+
+export function generateReport(alias: string, body: GenerateAarRequest) {
+  return apiFetch<AfterActionReport>(`${BASE}/${alias}/unified/reports/generate`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export function saveReport(alias: string, report: AfterActionReport) {
+  return apiFetch<AfterActionReport>(`${BASE}/${alias}/unified/reports/${report.id}`, {
+    method: 'PUT',
+    body: JSON.stringify(report),
+  });
+}
+
+export function finalizeReport(alias: string, reportId: string, actor: string) {
+  return apiFetch<AfterActionReport>(`${BASE}/${alias}/unified/reports/${reportId}/finalize`, {
+    method: 'POST',
+    body: JSON.stringify({ actor }),
+  });
+}
+
+export function deleteReport(alias: string, reportId: string) {
+  return fetch(`${BASE}/${alias}/unified/reports/${reportId}`, { method: 'DELETE' }).then((res) => {
+    if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`);
+  });
+}
+
+/** Build the export download URL for markdown or html. */
+export function reportExportUrl(alias: string, reportId: string, format: 'markdown' | 'html') {
+  return `${BASE}/${alias}/unified/reports/${reportId}/export?format=${format}`;
 }

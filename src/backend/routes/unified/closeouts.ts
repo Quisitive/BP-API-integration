@@ -10,10 +10,13 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { getRepository } from '../../storage/factory.js';
 import { newAuditEvent } from '../../storage/repository.js';
+import { CompassOneClient } from '../../services/compassOneClient.js';
+import { dispositionFromResolution } from '../../services/tuningInsights.js';
 import type { UnifiedTenantConfig } from '../../config/tenants.schema.js';
 import type { CloseoutRecord } from '../../types.js';
 
 const router = Router({ mergeParams: true });
+const bpClient = new CompassOneClient();
 
 /**
  * GET /api/tenants/:alias/unified/closeouts
@@ -59,7 +62,20 @@ router.post('/', async (req: Request, res: Response) => {
     closedAt: new Date().toISOString(),
     resolution,
     notes,
+    disposition: dispositionFromResolution(resolution),
   };
+
+  // Best-effort enrichment from the linked BP detection so tuning analytics
+  // can compute per-rule false-positive rate and MTTR. Never block closeout.
+  if (bpDetectionId) {
+    try {
+      const detection = await bpClient.getDetection(tenant, bpDetectionId);
+      if (detection.alertTypes?.length) closeout.alertTypes = detection.alertTypes;
+      if (detection.created) closeout.detectionCreatedAt = detection.created;
+    } catch {
+      // Detection lookup is optional; proceed without enrichment.
+    }
+  }
 
   try {
     const repo = getRepository();

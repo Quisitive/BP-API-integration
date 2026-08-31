@@ -4,10 +4,12 @@ import UnifiedCommandDashboard from './components/UnifiedCommandDashboard';
 import CorrelationPanel from './components/CorrelationPanel';
 import TriageRemediationPanel from './components/TriageRemediationPanel';
 import CloseoutGovernancePanel from './components/CloseoutGovernancePanel';
+import TuningInsightsPanel from './components/TuningInsightsPanel';
+import AfterActionReportPanel from './components/AfterActionReportPanel';
 import TenantOnboardingWizard from './components/TenantOnboardingWizard';
 import './App.css';
 
-type View = 'legacy' | 'unified' | 'correlations' | 'triage' | 'closeout' | 'onboarding';
+type View = 'legacy' | 'unified' | 'correlations' | 'triage' | 'closeout' | 'tuning' | 'aar' | 'onboarding';
 
 interface TenantSummary {
   alias: string;
@@ -66,6 +68,12 @@ function App() {
           <button className={view === 'closeout' ? 'active' : ''} onClick={() => setView('closeout')}>
             Closeout Governance
           </button>
+          <button className={view === 'tuning' ? 'active' : ''} onClick={() => setView('tuning')}>
+            Trends &amp; Tuning
+          </button>
+          <button className={view === 'aar' ? 'active' : ''} onClick={() => setView('aar')}>
+            After Action Report
+          </button>
           <button className={view === 'legacy' ? 'active' : ''} onClick={() => setView('legacy')}>
             Legacy BP Dashboard
           </button>
@@ -122,6 +130,8 @@ function App() {
         {view === 'correlations' && tenantAlias && <CorrelationPanel tenantAlias={tenantAlias} />}
         {view === 'triage' && tenantAlias && <TriageRemediationPanel tenantAlias={tenantAlias} />}
         {view === 'closeout' && tenantAlias && <CloseoutGovernancePanel tenantAlias={tenantAlias} currentUser="analyst" />}
+        {view === 'tuning' && tenantAlias && <TuningInsightsPanel tenantAlias={tenantAlias} />}
+        {view === 'aar' && tenantAlias && <AfterActionReportPanel tenantAlias={tenantAlias} currentUser="analyst" />}
       </main>
     </div>
   );

@@ -25,6 +25,7 @@ import {
   tenantIsolationMiddleware,
 } from './middleware/index.js';
 import { createRepository } from './storage/factory.js';
+import { startSnapshotScheduler } from './services/trendSnapshots.js';
 import bpRoutes from './routes/bp/index.js';
 import xdrRoutes from './routes/xdr/index.js';
 import unifiedRoutes from './routes/unified/index.js';
@@ -126,6 +127,9 @@ async function main() {
   app.listen(PORT, () => {
     console.log(`[server] Unified SOC Dashboard running on http://localhost:${PORT}`);
   });
+
+  // Optional periodic trend-snapshot capture (gated by ENABLE_TREND_SNAPSHOTS=true)
+  startSnapshotScheduler(registry);
 }
 
 main().catch(err => {

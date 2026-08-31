@@ -14,7 +14,9 @@ import type {
   BpDetection,
   DetectionCorrelation,
   CloseoutRecord,
+  TrendSnapshot,
   AlertSnapshot,
+  AfterActionReport,
 } from '../types.js';
 import type { CaseRepository } from './repository.js';
 import { toCaseRecord } from './repository.js';
@@ -89,11 +91,27 @@ export class PostgresCaseRepository implements CaseRepository {
         snapshot_at TIMESTAMPTZ DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS after_action_reports (
+        id TEXT NOT NULL,
+        tenant_alias TEXT NOT NULL,
+        data JSONB NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (tenant_alias, id)
+      );
+
+      CREATE TABLE IF NOT EXISTS trend_snapshots (
+        id TEXT PRIMARY KEY,
+        tenant_alias TEXT NOT NULL,
+        data JSONB NOT NULL,
+        captured_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
       CREATE INDEX IF NOT EXISTS idx_proposals_tenant ON proposals(tenant_alias, incident_id);
       CREATE INDEX IF NOT EXISTS idx_audit_tenant ON audit_events(tenant_alias, incident_id);
       CREATE INDEX IF NOT EXISTS idx_correlations_detection ON correlations(bp_detection_id);
       CREATE INDEX IF NOT EXISTS idx_correlations_incident ON correlations(xdr_incident_id);
       CREATE INDEX IF NOT EXISTS idx_snapshots_tenant ON alert_snapshots(tenant_alias);
+      CREATE INDEX IF NOT EXISTS idx_trend_snapshots_tenant ON trend_snapshots(tenant_alias);
     `);
   }
 
@@ -284,5 +302,58 @@ export class PostgresCaseRepository implements CaseRepository {
       [tenantAlias, limit],
     );
     return rows.map((r) => r.data as AlertSnapshot);
+  }
+
+  // -- Trend Snapshots ------------------------------------------------------
+
+  async saveTrendSnapshot(snapshot: TrendSnapshot): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO trend_snapshots (id, tenant_alias, data, captured_at)
+       VALUES ($1, $2, $3, $4)`,
+      [snapshot.id, snapshot.tenantAlias, JSON.stringify(snapshot), snapshot.capturedAt],
+    );
+  }
+
+  async listTrendSnapshots(tenantAlias: string, limit = 500): Promise<TrendSnapshot[]> {
+    const { rows } = await this.pool.query(
+      `SELECT data FROM trend_snapshots WHERE tenant_alias = $1 ORDER BY captured_at ASC LIMIT $2`,
+      [tenantAlias, limit],
+    );
+    return rows.map((r) => r.data as TrendSnapshot);
+  }
+
+  // -- After Action Reports -------------------------------------------------
+
+  async saveReport(report: AfterActionReport): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO after_action_reports (id, tenant_alias, data, updated_at)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (tenant_alias, id)
+       DO UPDATE SET data = $3, updated_at = NOW()`,
+      [report.id, report.tenantAlias, JSON.stringify(report)],
+    );
+  }
+
+  async getReport(tenantAlias: string, reportId: string): Promise<AfterActionReport | null> {
+    const { rows } = await this.pool.query(
+      `SELECT data FROM after_action_reports WHERE tenant_alias = $1 AND id = $2`,
+      [tenantAlias, reportId],
+    );
+    return rows.length > 0 ? (rows[0].data as AfterActionReport) : null;
+  }
+
+  async listReports(tenantAlias: string, limit = 100): Promise<AfterActionReport[]> {
+    const { rows } = await this.pool.query(
+      `SELECT data FROM after_action_reports WHERE tenant_alias = $1 ORDER BY updated_at DESC LIMIT $2`,
+      [tenantAlias, limit],
+    );
+    return rows.map((r) => r.data as AfterActionReport);
+  }
+
+  async deleteReport(tenantAlias: string, reportId: string): Promise<void> {
+    await this.pool.query(
+      `DELETE FROM after_action_reports WHERE tenant_alias = $1 AND id = $2`,
+      [tenantAlias, reportId],
+    );
   }
 }
