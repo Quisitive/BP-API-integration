@@ -1,0 +1,52 @@
+[
+  {
+    "alias": "4refuel",
+    "displayName": "4Refuel",
+    "blackpoint": {
+      "customerId": "1b318c11-9fbf-4b2d-a12d-852c45c80e29"
+    },
+    "microsoft": null,
+    "enabled": true,
+    "tags": ["blackpoint"]
+  },
+  {
+    "alias": "heliene",
+    "displayName": "Heliene",
+    "blackpoint": {
+      "customerId": "4fa09c2c-11f8-428c-b9e1-e3cb80794d15"
+    },
+    "microsoft": null,
+    "enabled": true,
+    "tags": ["blackpoint"]
+  },
+  {
+    "alias": "nonin",
+    "displayName": "NONIN Medical Inc",
+    "blackpoint": {
+      "customerId": "3bc145e5-00bd-4be5-a9b2-76870f76860c"
+    },
+    "microsoft": null,
+    "enabled": true,
+    "tags": ["blackpoint"]
+  },
+  {
+    "alias": "quisitive-sandbox",
+    "displayName": "Quisitive Sandbox Environment (Demo)",
+    "blackpoint": {
+      "customerId": "1ad02d21-1dc3-4ba7-98c5-c0f3348e3f62"
+    },
+    "microsoft": null,
+    "enabled": true,
+    "tags": ["blackpoint", "demo"]
+  },
+  {
+    "alias": "velosity",
+    "displayName": "Velosity",
+    "blackpoint": {
+      "customerId": "ed7c9fac-8348-4715-a310-4cb03e9670b1"
+    },
+    "microsoft": null,
+    "enabled": true,
+    "tags": ["blackpoint"]
+  }
+]
