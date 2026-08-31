@@ -33,6 +33,13 @@
 }
 .tip-export:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.tip-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tip-export[href] { text-decoration: none; display: inline-block; }
+
 .tip-section-head {
   display: flex;
   align-items: center;

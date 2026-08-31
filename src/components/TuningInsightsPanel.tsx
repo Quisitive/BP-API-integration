@@ -9,6 +9,7 @@ import React, { useEffect, useState } from 'react';
 import {
   bpTuningInsights,
   bpTuningTicketsCsvUrl,
+  cisoReportMarkdownUrl,
   bpSnapshots,
   bpCaptureSnapshot,
   correlationTrends,
@@ -89,9 +90,14 @@ const TuningInsightsPanel: React.FC<Props> = ({ tenantAlias }) => {
             generated {new Date(data.generatedAt).toLocaleString()}
           </p>
         </div>
-        <button className="tip-export" onClick={exportJson} disabled={data.totalCloseouts === 0}>
-          Export JSON
-        </button>
+        <div className="tip-actions">
+          <a className="tip-export" href={cisoReportMarkdownUrl(tenantAlias)} download>
+            CISO Report (MD)
+          </a>
+          <button className="tip-export" onClick={exportJson} disabled={data.totalCloseouts === 0}>
+            Export JSON
+          </button>
+        </div>
       </div>
 
       {data.totalCloseouts === 0 ? (

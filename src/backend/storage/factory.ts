@@ -6,6 +6,7 @@
 //
 // STORAGE_BACKEND values:
 //   'memory'   — InMemoryCaseRepository (default, dev only)
+//   'file'     — FileCaseRepository (dev; JSON file, survives restart)
 //   'postgres' — PostgresCaseRepository (requires DATABASE_URL)
 //   'cosmos'   — CosmosCaseRepository (requires COSMOS_CONNECTION_STRING)
 // ---------------------------------------------------------------------------
@@ -13,7 +14,7 @@
 import type { CaseRepository } from './repository.js';
 import { InMemoryCaseRepository } from './memory.js';
 
-export type StorageBackend = 'memory' | 'postgres' | 'cosmos';
+export type StorageBackend = 'memory' | 'file' | 'postgres' | 'cosmos';
 
 let instance: CaseRepository | null = null;
 
@@ -29,6 +30,11 @@ export async function createRepository(
   const resolved = backend || (process.env.STORAGE_BACKEND as StorageBackend) || 'memory';
 
   switch (resolved) {
+    case 'file': {
+      const { FileCaseRepository } = await import('./file.js');
+      instance = new FileCaseRepository();
+      break;
+    }
     case 'postgres': {
       const { PostgresCaseRepository } = await import('./postgres.js');
       instance = new PostgresCaseRepository();

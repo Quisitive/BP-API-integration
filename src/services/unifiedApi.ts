@@ -188,6 +188,35 @@ export function correlationCandidates(alias: string) {
   return apiFetch<CorrelationCandidate[]>(`${BASE}/${alias}/unified/correlations/candidates`);
 }
 
+export interface CisoReport {
+  generatedAt: string;
+  tenantAlias: string;
+  tenantName: string;
+  kpis: {
+    totalCloseouts: number;
+    falsePositiveRate: number;
+    noiseRate: number;
+    avgMttrHours: number | null;
+    openDetections: number;
+    detectionTrendPct: number | null;
+    totalCorrelations: number;
+    avgCorrelationConfidence: number;
+    highSeverityAnomalies: number;
+  };
+  topNoisyRules: { alertType: string; noiseRate: number; total: number }[];
+  highlights: { label: string; detail: string }[];
+  recommendations: string[];
+}
+
+export function cisoReport(alias: string) {
+  return apiFetch<CisoReport>(`${BASE}/${alias}/unified/reports/ciso`);
+}
+
+/** Direct URL for the Markdown download (opened in a new tab / anchor href). */
+export function cisoReportMarkdownUrl(alias: string) {
+  return `${BASE}/${alias}/unified/reports/ciso?format=md`;
+}
+
 export function bpReports(alias: string) {
   return apiFetch<unknown[]>(`${BASE}/${alias}/bp/reports`);
 }
