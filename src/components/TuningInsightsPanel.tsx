@@ -11,10 +11,14 @@ import {
   bpSnapshots,
   bpCaptureSnapshot,
   correlationTrends,
+  bpAnomalies,
+  correlationCandidates,
   type TuningInsights,
   type AlertTypeInsight,
   type TrendSnapshot,
   type CorrelationTrends,
+  type AnomalyReport,
+  type CorrelationCandidate,
 } from '../services/unifiedApi';
 import './TuningInsightsPanel.css';
 
@@ -187,7 +191,9 @@ const TuningInsightsPanel: React.FC<Props> = ({ tenantAlias }) => {
       )}
 
       <TrendHistorySection tenantAlias={tenantAlias} />
+      <AnomaliesSection tenantAlias={tenantAlias} />
       <CorrelationTrendsSection tenantAlias={tenantAlias} />
+      <CorrelationCandidatesSection tenantAlias={tenantAlias} />
     </div>
   );
 };
@@ -417,4 +423,135 @@ const CorrelationTrendsSection: React.FC<{ tenantAlias: string }> = ({ tenantAli
   );
 };
 
+// ---------------------------------------------------------------------------
+// Anomalies — spike alerts derived from trend-snapshot history
+// ---------------------------------------------------------------------------
+
+const SEVERITY_COLORS: Record<string, string> = {
+  high: '#c62828',
+  medium: '#ef6c00',
+  low: '#f9a825',
+};
+
+function anomalyValue(a: { metric: string; value: number }): string {
+  return a.metric === 'noiseRate' ? `${Math.round(a.value * 100)}%` : String(a.value);
+}
+
+const AnomaliesSection: React.FC<{ tenantAlias: string }> = ({ tenantAlias }) => {
+  const [data, setData] = useState<AnomalyReport | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError(null);
+    bpAnomalies(tenantAlias)
+      .then((d) => { if (active) setData(d); })
+      .catch((e) => { if (active) setError((e as Error).message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [tenantAlias]);
+
+  if (loading) return <section className="tip-section"><h4>Spike Alerts</h4><div className="tip-none">Loading…</div></section>;
+  if (error) return <section className="tip-section"><h4>Spike Alerts</h4><div className="tip-error">Failed to load: {error}</div></section>;
+  if (!data) return null;
+
+  return (
+    <section className="tip-section">
+      <h4>Spike Alerts</h4>
+      <p className="tip-hint">
+        Anomalous jumps in detection volume or closeout noise rate vs. recent history
+        ({data.snapshotCount} snapshot{data.snapshotCount === 1 ? '' : 's'}).
+      </p>
+
+      {data.anomalies.length === 0 ? (
+        <div className="tip-none">
+          No spikes detected. Capture more snapshots over time to build a baseline for anomaly detection.
+        </div>
+      ) : (
+        <ul className="tip-anomaly-list">
+          {data.anomalies.map((a, i) => (
+            <li key={`${a.metric}-${a.capturedAt}-${i}`} className="tip-anomaly">
+              <span
+                className="tip-anomaly-sev"
+                style={{ background: SEVERITY_COLORS[a.severity] || '#757575' }}
+              >
+                {a.severity}
+              </span>
+              <span className="tip-anomaly-body">
+                <strong>{a.metric}</strong> → {anomalyValue(a)}
+                {a.deltaPct !== Infinity && a.deltaPct > 0 && (
+                  <span className="tip-anomaly-delta"> (+{Math.round(a.deltaPct * 100)}%)</span>
+                )}
+                <span className="tip-anomaly-date"> · {a.capturedAt.slice(0, 10)}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Suggested Correlations — auto-detected BP <-> XDR candidate links
+// ---------------------------------------------------------------------------
+
+const CorrelationCandidatesSection: React.FC<{ tenantAlias: string }> = ({ tenantAlias }) => {
+  const [data, setData] = useState<CorrelationCandidate[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError(null);
+    correlationCandidates(tenantAlias)
+      .then((d) => { if (active) setData(d); })
+      .catch((e) => { if (active) setError((e as Error).message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [tenantAlias]);
+
+  if (loading) return <section className="tip-section"><h4>Suggested Correlations</h4><div className="tip-none">Loading…</div></section>;
+  if (error) return <section className="tip-section"><h4>Suggested Correlations</h4><div className="tip-error">Failed to load: {error}</div></section>;
+  if (!data) return null;
+
+  return (
+    <section className="tip-section">
+      <h4>Suggested Correlations</h4>
+      <p className="tip-hint">
+        Auto-detected likely links between Blackpoint detections and Defender XDR incidents,
+        scored by timing, title similarity, and shared entities.
+      </p>
+
+      {data.length === 0 ? (
+        <div className="tip-none">
+          No candidate correlations. Sync BP detections and XDR incidents so unlinked pairs can be scored.
+        </div>
+      ) : (
+        <ul className="tip-candidate-list">
+          {data.map((c) => (
+            <li key={`${c.bpDetectionId}-${c.xdrIncidentId}`} className="tip-candidate">
+              <div className="tip-candidate-head">
+                <span className="tip-candidate-type">{c.correlationType}</span>
+                <span className="tip-candidate-conf">{pct(c.confidence)}</span>
+              </div>
+              <div className="tip-candidate-titles">
+                <span className="tip-candidate-bp">BP: {c.bpTitle}</span>
+                <span className="tip-candidate-xdr">XDR: {c.xdrTitle}</span>
+              </div>
+              {c.reasons.length > 0 && (
+                <div className="tip-candidate-reasons">{c.reasons.join(' · ')}</div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+};
+
 export default TuningInsightsPanel;
+

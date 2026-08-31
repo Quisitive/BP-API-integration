@@ -86,3 +86,21 @@
 .tip-rate.high { background: #fed7d7; color: #c53030; }
 .tip-rate.mid { background: #feebc8; color: #c05621; }
 .tip-rate.low { background: #c6f6d5; color: #276749; }
+
+/* Spike alerts (anomalies) --------------------------------------------------*/
+.tip-anomaly-list { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.tip-anomaly { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6rem; background: #fafbfc; border: 1px solid #e2e8f0; border-radius: 6px; }
+.tip-anomaly-sev { text-transform: uppercase; font-size: 0.65rem; font-weight: 700; color: #fff; padding: 0.15rem 0.45rem; border-radius: 10px; letter-spacing: 0.03em; }
+.tip-anomaly-body { font-size: 0.85rem; color: #2d3748; }
+.tip-anomaly-delta { color: #c62828; font-weight: 600; }
+.tip-anomaly-date { color: #718096; }
+
+/* Suggested correlation candidates -----------------------------------------*/
+.tip-candidate-list { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.tip-candidate { padding: 0.5rem 0.7rem; background: #fafbfc; border: 1px solid #e2e8f0; border-radius: 6px; }
+.tip-candidate-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem; }
+.tip-candidate-type { text-transform: uppercase; font-size: 0.65rem; font-weight: 700; color: #3730a3; background: #e0e7ff; padding: 0.15rem 0.45rem; border-radius: 10px; letter-spacing: 0.03em; }
+.tip-candidate-conf { font-weight: 700; color: #2b6cb0; font-size: 0.85rem; }
+.tip-candidate-titles { display: flex; flex-direction: column; gap: 0.1rem; font-size: 0.82rem; color: #2d3748; }
+.tip-candidate-xdr { color: #4a5568; }
+.tip-candidate-reasons { margin-top: 0.3rem; font-size: 0.75rem; color: #718096; }

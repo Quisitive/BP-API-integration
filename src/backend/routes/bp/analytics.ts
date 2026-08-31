@@ -8,6 +8,7 @@ import { CompassOneClient } from '../../services/compassOneClient.js';
 import { getRepository } from '../../storage/factory.js';
 import { computeTuningInsights } from '../../services/tuningInsights.js';
 import { captureTrendSnapshot } from '../../services/trendSnapshots.js';
+import { detectSnapshotAnomalies } from '../../services/snapshotAnomalies.js';
 import type { UnifiedTenantConfig } from '../../config/tenants.schema.js';
 
 const router = Router({ mergeParams: true });
@@ -126,6 +127,29 @@ router.post('/snapshots', async (req: Request, res: Response) => {
     res.status(201).json(snapshot);
   } catch (err) {
     res.status(502).json({ error: 'Failed to capture snapshot', detail: (err as Error).message });
+  }
+});
+
+/**
+ * GET /api/tenants/:alias/bp/analytics/anomalies
+ * Spike/anomaly alerts derived from trend-snapshot history.
+ * Optional ?window=5&zThreshold=2&minDeltaPct=0.5&minAbsolute=3
+ */
+router.get('/anomalies', async (req: Request, res: Response) => {
+  const tenant = req.tenant as UnifiedTenantConfig;
+  const num = (v: unknown) => (v !== undefined ? Number(v) : undefined);
+
+  try {
+    const snapshots = await getRepository().listTrendSnapshots(tenant.alias, 1000);
+    const report = detectSnapshotAnomalies(snapshots, {
+      window: num(req.query.window),
+      zThreshold: num(req.query.zThreshold),
+      minDeltaPct: num(req.query.minDeltaPct),
+      minAbsolute: num(req.query.minAbsolute),
+    });
+    res.json(report);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to compute anomalies', detail: (err as Error).message });
   }
 });
 

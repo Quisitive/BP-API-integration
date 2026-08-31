@@ -124,6 +124,42 @@ export function correlationTrends(alias: string) {
   return apiFetch<CorrelationTrends>(`${BASE}/${alias}/unified/correlations/trends`);
 }
 
+export interface SnapshotAnomaly {
+  capturedAt: string;
+  metric: 'openDetections' | 'totalDetections' | 'noiseRate';
+  severity: 'low' | 'medium' | 'high';
+  value: number;
+  baseline: number;
+  deltaPct: number;
+  zScore: number;
+  message: string;
+}
+
+export interface AnomalyReport {
+  generatedAt: string;
+  snapshotCount: number;
+  anomalies: SnapshotAnomaly[];
+  thresholds: { window: number; zThreshold: number; minDeltaPct: number; minAbsolute: number };
+}
+
+export function bpAnomalies(alias: string) {
+  return apiFetch<AnomalyReport>(`${BASE}/${alias}/bp/analytics/anomalies`);
+}
+
+export interface CorrelationCandidate {
+  bpDetectionId: string;
+  xdrIncidentId: string;
+  bpTitle: string;
+  xdrTitle: string;
+  correlationType: 'entity' | 'temporal' | 'title';
+  confidence: number;
+  reasons: string[];
+}
+
+export function correlationCandidates(alias: string) {
+  return apiFetch<CorrelationCandidate[]>(`${BASE}/${alias}/unified/correlations/candidates`);
+}
+
 export function bpReports(alias: string) {
   return apiFetch<unknown[]>(`${BASE}/${alias}/bp/reports`);
 }

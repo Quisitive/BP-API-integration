@@ -13,7 +13,7 @@
     "build:server": "tsc -p tsconfig.server.json",
     "start": "node dist-server/backend/server.js",
     "preview": "vite preview",
-    "test": "tsx --test src/backend/services/tuningInsights.test.ts src/backend/services/correlationTrends.test.ts",
+    "test": "tsx --test src/backend/services/tuningInsights.test.ts src/backend/services/correlationTrends.test.ts src/backend/services/snapshotAnomalies.test.ts src/backend/services/correlationCandidates.test.ts",
     "type-check": "tsc --noEmit && tsc -p tsconfig.server.json --noEmit",
     "legacy:dev": "ts-node --project tsconfig.legacy.json legacy/examples/soc-workflow-complete.ts",
     "legacy:serve": "node server.js"

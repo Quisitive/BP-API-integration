@@ -10,6 +10,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { getRepository } from '../../storage/factory.js';
 import { computeCorrelationTrends } from '../../services/correlationTrends.js';
+import { detectCorrelationCandidates } from '../../services/correlationCandidates.js';
 import type { UnifiedTenantConfig } from '../../config/tenants.schema.js';
 import type { DetectionCorrelation } from '../../types.js';
 
@@ -42,6 +43,33 @@ router.get('/trends', async (req: Request, res: Response) => {
     res.json(computeCorrelationTrends(correlations));
   } catch (err) {
     res.status(500).json({ error: 'Failed to compute correlation trends', detail: (err as Error).message });
+  }
+});
+
+/**
+ * GET /api/tenants/:alias/unified/correlations/candidates
+ * Auto-suggested correlations between stored BP detections and XDR incidents,
+ * excluding pairs already correlated. Optional ?windowMs&minConfidence&limit
+ */
+router.get('/candidates', async (req: Request, res: Response) => {
+  const tenant = req.tenant as UnifiedTenantConfig;
+  const num = (v: unknown) => (v !== undefined ? Number(v) : undefined);
+
+  try {
+    const repo = getRepository();
+    const [detections, incidents, existing] = await Promise.all([
+      repo.listDetections(tenant.alias, 1000),
+      repo.listCases(tenant.alias, 1000),
+      repo.listCorrelations(tenant.alias),
+    ]);
+    const candidates = detectCorrelationCandidates(detections, incidents, existing, {
+      windowMs: num(req.query.windowMs),
+      minConfidence: num(req.query.minConfidence),
+      limit: num(req.query.limit),
+    });
+    res.json(candidates);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to compute correlation candidates', detail: (err as Error).message });
   }
 });
 
