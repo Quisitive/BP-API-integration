@@ -89,10 +89,8 @@ interface TenantDetectionReportData {
 // API helpers  (proxy in src/setupProxy.js routes /v1/* → blackpointcyber.com)
 // ---------------------------------------------------------------------------
 
-const API_KEY = process.env.REACT_APP_BLACKPOINT_API_KEY || '';
-
 function apiHeaders(tenantId?: string): HeadersInit {
-  const h: Record<string, string> = { Authorization: `Bearer ${API_KEY}` };
+  const h: Record<string, string> = {};
   if (tenantId) h['x-tenant-id'] = tenantId;
   return h;
 }
@@ -1170,11 +1168,8 @@ const Dashboard: React.FC = () => {
   const [tenantsError, setTenantsError] = useState<string | null>(null);
   const assetsLoadedRef = useRef(false);
 
-  const noApiKey = !API_KEY;
-
   // Load tenants + alert previews on mount
   useEffect(() => {
-    if (noApiKey) return;
     loadTenants()
       .then(list => {
         setTenants(list);
@@ -1210,7 +1205,7 @@ const Dashboard: React.FC = () => {
       })
       .catch((e: Error) => setTenantsError(e.message))
       .finally(() => setTenantsLoading(false));
-  }, [noApiKey]);
+  }, []);
 
   // Lazy-load asset counts when Tenants tab is first opened
   useEffect(() => {
@@ -1278,13 +1273,6 @@ const Dashboard: React.FC = () => {
               {tenantsLoading ? 'Connecting…' : tenantsError ? '⚠ API Error' : '● Live'}
             </span>
           </div>
-
-          {noApiKey && (
-            <div className="error-message" style={{ marginTop: 12 }}>
-              ⚠ No API key found. Add <code>REACT_APP_BLACKPOINT_API_KEY</code> to a{' '}
-              <code>.env</code> file and restart the dev server.
-            </div>
-          )}
 
           <nav className="tab-nav">
             {(

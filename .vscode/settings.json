@@ -8,6 +8,8 @@
     "python.analysis.extraPaths": [
         "c:\\Users\\CFoulon\\.vscode\\extensions\\ms-security.ms-sentinel-2.0.0\\python",
         "c:\\Users\\CFoulon\\.vscode\\extensions\\ms-security.ms-sentinel-2.0.2\\python",
-        "c:\\Users\\CFoulon\\.vscode\\extensions\\ms-security.ms-sentinel-2.1.0\\python"
+        "c:\\Users\\CFoulon\\.vscode\\extensions\\ms-security.ms-sentinel-2.1.0\\python",
+        "c:\\Users\\CFoulon\\.vscode\\extensions\\ms-security.ms-sentinel-2.2.0\\python",
+        "c:\\Users\\CFoulon\\.vscode\\extensions\\ms-security.ms-sentinel-2.3.0\\python"
     ]
 }

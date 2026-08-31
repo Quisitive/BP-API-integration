@@ -1,0 +1,252 @@
+.unified-command-dashboard {
+  padding: 1.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.ucd-loading,
+.ucd-error {
+  padding: 2rem;
+  text-align: center;
+  font-size: 1.1rem;
+}
+.ucd-error { color: #c0392b; }
+
+.ucd-warning {
+  margin: 0.75rem 0 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  background: rgba(120, 53, 15, 0.25);
+  color: #fde68a;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+/* KPI Row */
+.ucd-kpi-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+.ucd-kpi-card {
+  flex: 1;
+  min-width: 140px;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+}
+.ucd-kpi-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+}
+.ucd-kpi-label {
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+.ucd-kpi-card.bp-open { border-left: 4px solid #e67e22; }
+.ucd-kpi-card.bp-resolved { border-left: 4px solid #27ae60; }
+.ucd-kpi-card.xdr-active { border-left: 4px solid #2980b9; }
+.ucd-kpi-card.xdr-critical { border-left: 4px solid #c0392b; }
+.ucd-kpi-card.correlations { border-left: 4px solid #8e44ad; }
+
+/* Sections */
+.ucd-section {
+  margin-bottom: 2rem;
+}
+.ucd-section h3 {
+  margin-bottom: 0.75rem;
+  color: #2c3e50;
+}
+.ucd-empty {
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Tables */
+.ucd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.ucd-table th,
+.ucd-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #dee2e6;
+  text-align: left;
+}
+.ucd-table th {
+  background: #f1f3f5;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: #495057;
+}
+.ucd-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.ucd-row-clickable {
+  cursor: pointer;
+}
+
+.ucd-row-clickable:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
+
+/* Source badges */
+.ucd-source {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+.ucd-source-blackpoint { background: #ffeaa7; color: #6c5b00; }
+.ucd-source-defender-xdr { background: #dfe6e9; color: #2d3436; }
+
+/* Severity row highlights */
+.ucd-sev-critical { border-left: 3px solid #c0392b; }
+.ucd-sev-high { border-left: 3px solid #e67e22; }
+.ucd-sev-medium { border-left: 3px solid #f1c40f; }
+.ucd-sev-low { border-left: 3px solid #27ae60; }
+
+.ucd-case-panel {
+  border-top: 1px solid #dbe2ea;
+  padding-top: 1rem;
+}
+
+.ucd-case-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.ucd-case-card {
+  border: 1px solid #dbe2ea;
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: #ffffff;
+}
+
+.ucd-case-card h4 {
+  margin-top: 0;
+  margin-bottom: 0.6rem;
+  color: #2c3e50;
+}
+
+.ucd-case-card p {
+  margin: 0.3rem 0;
+}
+
+.ucd-open-btn {
+  margin-top: 0.65rem;
+  border: 1px solid #1d4ed8;
+  background: #1d4ed8;
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.4rem 0.65rem;
+  cursor: pointer;
+}
+
+.ucd-open-btn:hover {
+  background: #1e40af;
+}
+
+.ucd-links-list,
+.ucd-audit-list {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.ucd-links-list li,
+.ucd-audit-list li {
+  margin: 0.35rem 0;
+}
+
+.ucd-link-source {
+  margin-left: 0.45rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.ucd-audit-time {
+  display: inline-block;
+  min-width: 170px;
+  color: #6b7280;
+  font-size: 0.78rem;
+}
+
+.ucd-audit-main {
+  font-size: 0.85rem;
+}
+
+.ucd-meta {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.ucd-inline-title {
+  margin-top: 0.85rem;
+}
+
+.ucd-risk-pill {
+  display: inline-block;
+  margin-right: 0.45rem;
+  padding: 0.08rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ucd-risk-low {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.ucd-risk-medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.ucd-risk-high {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.ucd-risk-critical {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.ucd-substeps-list {
+  margin: 0.3rem 0 0.2rem 1.4rem;
+  padding: 0;
+}
+
+.ucd-checklist {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.ucd-checklist-item {
+  margin: 0.45rem 0;
+}
+
+.ucd-checklist-item label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.ucd-checklist-label {
+  line-height: 1.35;
+}

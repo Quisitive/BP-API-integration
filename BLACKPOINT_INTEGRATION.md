@@ -1,5 +1,9 @@
 # Blackpoint Cyber Integration
 
+> **Note**: This document covers the legacy direct-client usage. For the current unified backend,
+> see [SECOPS_OPERATIONS_GUIDE.md](SECOPS_OPERATIONS_GUIDE.md) and the `/bp/*` routes
+> in the [README](README.md#blackpoint-bp).
+
 Environment variables needed for Blackpoint Cyber API integration:
 
 ```bash

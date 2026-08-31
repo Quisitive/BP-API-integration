@@ -1,0 +1,73 @@
+.triage-remediation-panel {
+  padding: 1rem;
+}
+.trp-error { color: #c0392b; padding: 0.5rem; background: #fdecea; border-radius: 4px; margin-bottom: 1rem; }
+.trp-hint { color: #6c757d; font-style: italic; }
+
+.trp-actions button,
+.trp-recommendations button {
+  padding: 0.5rem 1rem;
+  background: #2980b9;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 0.75rem;
+}
+.trp-actions button:disabled,
+.trp-recommendations button:disabled { opacity: 0.6; }
+
+.trp-recommendations ul {
+  list-style: none;
+  padding: 0;
+}
+.trp-recommendations li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.trp-risk {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+}
+.trp-risk-critical { background: #c0392b; color: #fff; }
+.trp-risk-high { background: #e67e22; color: #fff; }
+.trp-risk-medium { background: #f1c40f; color: #333; }
+.trp-risk-low { background: #27ae60; color: #fff; }
+
+.trp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+.trp-table th, .trp-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #dee2e6;
+  text-align: left;
+}
+.trp-table th { background: #f1f3f5; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+
+.trp-approve {
+  padding: 0.25rem 0.6rem;
+  background: #27ae60;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-right: 0.25rem;
+}
+.trp-reject {
+  padding: 0.25rem 0.6rem;
+  background: #c0392b;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}

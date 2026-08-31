@@ -1,5 +1,10 @@
 # SOC Alert Dashboard with Lifecycle Tracking
 
+> **Note**: This document describes the legacy Blackpoint-only alert dashboard.
+> The unified platform now provides cross-source triage, correlation, and closeout
+> governance. See [SECOPS_OPERATIONS_GUIDE.md](SECOPS_OPERATIONS_GUIDE.md) for
+> current operational procedures.
+
 Visual dashboard for monitoring Blackpoint Cyber alerts with real-time timers, prioritized by severity, and comprehensive lifecycle tracking for SOC analysts.
 
 ## Features

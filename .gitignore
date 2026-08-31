@@ -1,3 +1,13 @@
 node_modules
 .env
+.env.*
+!.env.example
+
+# Local tenant configuration — contains real customer/tenant identifiers.
+# Use config/tenants.example.json as the committed template.
+config/tenants.json
+
+build/
+dist/
+dist-server/
 

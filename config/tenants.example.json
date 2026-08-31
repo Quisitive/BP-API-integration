@@ -1,0 +1,31 @@
+[
+  {
+    "alias": "contoso",
+    "displayName": "Contoso Healthcare",
+    "blackpoint": {
+      "customerId": "bp-uuid-example-1234"
+    },
+    "microsoft": {
+      "tenantId": "${CONTOSO_ENTRA_TENANT_ID}",
+      "clientId": "${CONTOSO_ENTRA_CLIENT_ID}",
+      "clientSecret": "${CONTOSO_ENTRA_CLIENT_SECRET}",
+      "securityApiHost": "https://api.security.microsoft.com",
+      "enabledWorkloads": ["DefenderForEndpoint", "DefenderForOffice365", "DefenderXdr"]
+    },
+    "enabled": true,
+    "tags": ["tier-1", "healthcare"],
+    "primaryAnalyst": "analyst@company.com",
+    "onboardedAt": "2025-11-01T00:00:00Z"
+  },
+  {
+    "alias": "fabrikam",
+    "displayName": "Fabrikam Manufacturing",
+    "blackpoint": {
+      "customerId": "bp-uuid-example-5678"
+    },
+    "microsoft": null,
+    "enabled": true,
+    "tags": ["tier-2"],
+    "onboardedAt": "2026-01-15T00:00:00Z"
+  }
+]

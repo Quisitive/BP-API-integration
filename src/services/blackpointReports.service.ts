@@ -59,11 +59,8 @@ export interface BlackpointReportListOptions {
   endDate?: string;
 }
 
-const API_KEY = process.env.REACT_APP_BLACKPOINT_API_KEY || '';
-
 function getHeaders(tenantId?: string): HeadersInit {
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${API_KEY}`,
     Accept: 'application/json',
   };
 

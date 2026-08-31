@@ -1,5 +1,9 @@
 # Closed Detections & Reporting Dashboard - Integration Guide
 
+> **Note**: This guide covers the legacy component-level integration.
+> For the current unified closeout workflow with governance and audit trail,
+> see [SECOPS_OPERATIONS_GUIDE.md](SECOPS_OPERATIONS_GUIDE.md#24-case-closeout).
+
 ## Overview
 
 This update adds comprehensive support for **reviewing closed/resolved detections after-the-fact** and generating detailed **detection reports** directly in the application UI.

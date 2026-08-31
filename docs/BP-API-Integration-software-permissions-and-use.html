@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Unified SOC Command Dashboard - Permissions and Use</title>
+  <style>
+    @page { size: Letter; margin: 0.65in; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Aptos", "Segoe UI", sans-serif;
+      color: #172033;
+      line-height: 1.45;
+      font-size: 10.5pt;
+      margin: 0;
+      background: #fff;
+    }
+    .cover {
+      border-left: 8px solid #1d4f91;
+      padding: 24px 0 22px 24px;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 25pt;
+      line-height: 1.08;
+      margin: 0 0 12px;
+      color: #0f2947;
+    }
+    h2 {
+      font-size: 15pt;
+      margin: 24px 0 8px;
+      padding-top: 8px;
+      color: #173f6d;
+      border-top: 1px solid #d6dee9;
+      break-after: avoid;
+    }
+    h3 {
+      font-size: 12.5pt;
+      margin: 17px 0 7px;
+      color: #1f4f7e;
+      break-after: avoid;
+    }
+    p { margin: 7px 0; }
+    .meta {
+      color: #536174;
+      font-size: 10.5pt;
+    }
+    .summary {
+      background: #eef5fb;
+      border: 1px solid #c8daeb;
+      padding: 12px 14px;
+      margin: 14px 0 18px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 16px;
+      break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #cfd8e3;
+      padding: 6px 7px;
+      vertical-align: top;
+    }
+    th {
+      background: #173f6d;
+      color: #fff;
+      text-align: left;
+      font-weight: 650;
+    }
+    tr:nth-child(even) td { background: #f7f9fc; }
+    code {
+      font-family: "Cascadia Mono", Consolas, monospace;
+      font-size: 9.5pt;
+      background: #eef1f5;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    pre {
+      background: #111827;
+      color: #f8fafc;
+      padding: 10px 12px;
+      border-radius: 6px;
+      overflow: hidden;
+      white-space: pre-wrap;
+      font-size: 9.5pt;
+    }
+    ul, ol { margin: 7px 0 12px 22px; padding: 0; }
+    li { margin: 3px 0; }
+    .note {
+      border-left: 4px solid #d97706;
+      background: #fff8ed;
+      padding: 8px 10px;
+      margin: 10px 0 14px;
+    }
+    .page-break { break-before: page; }
+    .checklist li { list-style: none; margin-left: -18px; }
+    .footer {
+      margin-top: 24px;
+      color: #697386;
+      font-size: 9pt;
+      border-top: 1px solid #d6dee9;
+      padding-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <h1>Unified SOC Command Dashboard<br />Installation, Runtime Permissions, and Use</h1>
+    <p class="meta"><strong>Date:</strong> 2026-07-15<br />
+    <strong>Repository:</strong> Q-CFoulon/BP-API-integration<br />
+    <strong>Software:</strong> Unified SOC Command Dashboard / BP API Integration</p>
+  </section>
+
+  <div class="summary">
+    <strong>Executive summary:</strong> The Unified SOC Command Dashboard is a local-first security operations dashboard that combines Blackpoint Cyber CompassOne data with Microsoft Defender XDR incident data. It is used by SOC analysts to view MDR detections, inspect Defender XDR incidents, correlate alerts across systems, manage tenant onboarding, record case closeout decisions, and optionally dispatch approved remediation actions to a separately deployed Defender Response MCP gateway.
+  </div>
+
+  <p>The application does not require local administrator rights to run once Node.js is installed. It does require controlled access to security APIs, API keys, Entra app registrations, and outbound HTTPS connectivity to Blackpoint and Microsoft services.</p>
+
+  <h2>What The Software Is Used For</h2>
+  <table>
+    <thead><tr><th>Capability</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td>Blackpoint CompassOne integration</td><td>Lists managed tenants, detections, alerts, analytics, reports, and asset inventory from Blackpoint CompassOne.</td></tr>
+      <tr><td>Microsoft Defender XDR integration</td><td>Lists Defender incidents, retrieves incident details and related alert links, and writes approved incident updates such as assignment, status, classification, determination, and tags.</td></tr>
+      <tr><td>Cross-source correlation</td><td>Helps analysts connect Blackpoint detections to Defender XDR incidents using tenant, entity, time, and incident context.</td></tr>
+      <tr><td>Tenant onboarding</td><td>Lets an operator add or update tenant entries without manually editing JSON for every onboarding step.</td></tr>
+      <tr><td>Triage and remediation workflow</td><td>Produces remediation proposals and supports human approval before any automated response is dispatched.</td></tr>
+      <tr><td>Closeout governance</td><td>Captures resolution taxonomy, closeout notes, and audit context for case handling.</td></tr>
+      <tr><td>Audit and tracking</td><td>Records analyst actions and local workflow state, depending on the configured storage backend.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Installation Permissions</h2>
+  <h3>Local Workstation Requirements</h3>
+  <table>
+    <thead><tr><th>Requirement</th><th>Permission Needed</th><th>Why It Is Needed</th></tr></thead>
+    <tbody>
+      <tr><td>Node.js 20 or later</td><td>Local software installation rights if Node.js is not already installed.</td><td>Runs the Vite frontend, Express backend, TypeScript tooling, and build scripts.</td></tr>
+      <tr><td>npm 9 or later</td><td>Included with Node.js; internet access to npm registry for dependency install.</td><td>Installs JavaScript dependencies from <code>package.json</code>.</td></tr>
+      <tr><td>Git or repository access</td><td>Read access to the repository and write access to the local checkout folder.</td><td>Clones or updates the application source code.</td></tr>
+      <tr><td>Local filesystem write access</td><td>Write access to the project directory.</td><td>Creates <code>node_modules</code>, <code>.env</code>, <code>config/tenants.json</code>, build output, logs, and local generated documents.</td></tr>
+      <tr><td>Local ports</td><td>Ability to bind localhost ports <code>3000</code> and <code>3001</code> by default.</td><td><code>3000</code> serves the Vite UI; <code>3001</code> serves the backend API.</td></tr>
+      <tr><td>Optional Docker</td><td>Docker Desktop / container runtime rights if using the Docker deployment path.</td><td>Builds and runs the application container instead of running directly with npm.</td></tr>
+    </tbody>
+  </table>
+  <p>Local administrator rights are normally only needed to install system software such as Node.js, Git, Docker Desktop, or corporate certificate tooling. Daily use of the application should run as a standard user.</p>
+
+  <h3>Install Commands</h3>
+  <pre>npm install
+npm run dev</pre>
+  <p>For production-style local validation:</p>
+  <pre>npm run build
+npm start</pre>
+
+  <h2>Runtime Network Access</h2>
+  <table>
+    <thead><tr><th>Destination</th><th>Direction</th><th>Port/Protocol</th><th>Used For</th></tr></thead>
+    <tbody>
+      <tr><td><code>http://localhost:3000</code></td><td>Local inbound</td><td>HTTP</td><td>Development frontend UI.</td></tr>
+      <tr><td><code>http://localhost:3001</code></td><td>Local inbound</td><td>HTTP</td><td>Development backend API and health endpoint.</td></tr>
+      <tr><td><code>https://api.blackpointcyber.com</code></td><td>Outbound</td><td>HTTPS 443</td><td>Blackpoint CompassOne API.</td></tr>
+      <tr><td><code>https://login.microsoftonline.com</code></td><td>Outbound</td><td>HTTPS 443</td><td>Entra ID user sign-in, JWKS token validation, and client credential token acquisition.</td></tr>
+      <tr><td><code>https://graph.microsoft.com</code></td><td>Outbound</td><td>HTTPS 443</td><td>Microsoft Graph Security API for Defender XDR incidents and alerts.</td></tr>
+      <tr><td><code>https://api.security.microsoft.com</code></td><td>Outbound</td><td>HTTPS 443</td><td>Optional Defender security API host when configured per tenant.</td></tr>
+      <tr><td>Configured MCP webhook URL</td><td>Outbound</td><td>HTTPS 443 recommended</td><td>Optional dispatch of approved remediation proposals to a separate automation gateway.</td></tr>
+      <tr><td><code>https://registry.npmjs.org</code></td><td>Outbound</td><td>HTTPS 443</td><td>Dependency installation with npm.</td></tr>
+      <tr><td>GitHub or internal Git remote</td><td>Outbound</td><td>HTTPS 443 or SSH 22</td><td>Source checkout and updates.</td></tr>
+    </tbody>
+  </table>
+  <p>Production deployments should use HTTPS, a managed reverse proxy or hosting platform, and network controls appropriate for SOC tooling.</p>
+
+  <h2>Application Configuration Secrets</h2>
+  <table>
+    <thead><tr><th>Secret / Setting</th><th>Location</th><th>Purpose</th><th>Handling Requirement</th></tr></thead>
+    <tbody>
+      <tr><td><code>COMPASSONE_API_KEY</code></td><td><code>.env</code></td><td>Account-level Blackpoint CompassOne API bearer token.</td><td>Store only on backend/server side. Do not expose to frontend variables or commit to Git.</td></tr>
+      <tr><td><code>COMPASSONE_API_URL</code></td><td><code>.env</code></td><td>CompassOne API base URL, usually <code>https://api.blackpointcyber.com</code>.</td><td>Non-secret but environment specific.</td></tr>
+      <tr><td><code>blackpoint.customerId</code></td><td><code>config/tenants.json</code></td><td>Blackpoint tenant/customer UUID used as <code>x-tenant-id</code>.</td><td>Treat as customer metadata; keep out of public repos.</td></tr>
+      <tr><td><code>blackpoint.apiKeyOverride</code></td><td><code>config/tenants.json</code> or env reference</td><td>Optional tenant-specific Blackpoint key.</td><td>Prefer <code>${ENV_VAR}</code> reference instead of literal key.</td></tr>
+      <tr><td>Microsoft <code>tenantId</code></td><td><code>config/tenants.json</code></td><td>Customer Entra tenant ID.</td><td>Customer metadata; restrict sharing.</td></tr>
+      <tr><td>Microsoft <code>clientId</code></td><td><code>config/tenants.json</code></td><td>Per-tenant service app registration client ID.</td><td>Non-secret identifier, but still operationally sensitive.</td></tr>
+      <tr><td>Microsoft <code>clientSecret</code></td><td><code>.env</code> via <code>${ENV_VAR}</code> reference</td><td>Per-tenant service app secret for client credential flow.</td><td>Secret. Store in <code>.env</code>, Key Vault, or managed secret store; rotate regularly.</td></tr>
+      <tr><td><code>VITE_ENTRA_CLIENT_ID</code></td><td><code>.env</code> / build env</td><td>Frontend SPA app registration client ID for user sign-in.</td><td>Non-secret public client ID.</td></tr>
+      <tr><td><code>VITE_ENTRA_TENANT_ID</code></td><td><code>.env</code> / build env</td><td>Platform Entra tenant ID for user sign-in.</td><td>Non-secret identifier.</td></tr>
+      <tr><td><code>ENTRA_TENANT_ID</code></td><td><code>.env</code> / runtime env</td><td>Backend token issuer tenant for API auth validation.</td><td>Non-secret identifier.</td></tr>
+      <tr><td><code>ENTRA_CLIENT_ID</code></td><td><code>.env</code> / runtime env</td><td>Backend API audience/client ID.</td><td>Non-secret identifier.</td></tr>
+      <tr><td><code>MCP_AUTOMATION_WEBHOOK_SECRET</code></td><td><code>.env</code></td><td>Optional shared secret for signed remediation webhook dispatch.</td><td>Secret. Rotate if exposed.</td></tr>
+      <tr><td>Storage credentials</td><td><code>.env</code></td><td>Optional PostgreSQL or Cosmos DB connection settings.</td><td>Secret. Use managed identity or secret store where possible.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Blackpoint CompassOne Permissions</h2>
+  <p>The dashboard uses a Blackpoint CompassOne API bearer token and sends the customer UUID as the <code>x-tenant-id</code> header for tenant-scoped requests.</p>
+  <table>
+    <thead><tr><th>CompassOne Area</th><th>API Use In This App</th><th>Access Needed</th></tr></thead>
+    <tbody>
+      <tr><td>Tenants</td><td><code>GET /v1/tenants</code> for onboarding tenant selection.</td><td>Account-level tenant listing permission.</td></tr>
+      <tr><td>Alert groups / detections</td><td><code>GET /v1/alert-groups</code>, individual alert group lookup, counts, weekly trends, top entities, top threats.</td><td>Tenant-scoped read permission for detections / alert groups.</td></tr>
+      <tr><td>Alerts</td><td>Alerts inside a detection / alert group.</td><td>Tenant-scoped read permission for alerts.</td></tr>
+      <tr><td>Reports</td><td>List reports, get report PDF URL, get report JSON payload.</td><td>Tenant-scoped report read permission.</td></tr>
+      <tr><td>Assets</td><td>List assets and count assets.</td><td>Tenant-scoped asset inventory read permission.</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>The API key is passed as <code>Authorization: Bearer {api_key}</code>.</li>
+    <li>Tenant-scoped calls require <code>x-tenant-id: {customerId}</code>.</li>
+    <li>Some CompassOne endpoints are role-limited and may return <code>403</code> until Blackpoint grants the correct API role.</li>
+    <li>This application currently reads Blackpoint data; it does not require Blackpoint write or administrative privileges for the implemented routes.</li>
+  </ul>
+
+  <h2>Microsoft Entra And Defender XDR Permissions</h2>
+  <p>The application uses two Microsoft identity patterns: a platform/user sign-in app registration for the dashboard UI and backend API authentication, and per-customer confidential client app registrations for Defender XDR / Microsoft Graph Security API access.</p>
+
+  <h3>Platform User Sign-In App Registration</h3>
+  <table>
+    <thead><tr><th>Permission / Setting</th><th>Requirement</th></tr></thead>
+    <tbody>
+      <tr><td>App type</td><td>Single-page application / public client using authorization code with PKCE.</td></tr>
+      <tr><td>Redirect URI</td><td>Local development: <code>http://localhost:3000</code> or the configured Vite origin. Production: the deployed HTTPS URL.</td></tr>
+      <tr><td>Exposed API scope</td><td><code>api://&lt;client-id&gt;/access_as_user</code> or the matching backend API scope configured for the app.</td></tr>
+      <tr><td>Backend validation</td><td>Backend validates bearer tokens using <code>ENTRA_TENANT_ID</code>, <code>ENTRA_CLIENT_ID</code>, issuer, audience, and Entra JWKS keys.</td></tr>
+      <tr><td>User assignment</td><td>SOC users should be assigned to the app through Entra ID.</td></tr>
+      <tr><td>App roles</td><td>Recommended roles are <code>SOC.Admin</code>, <code>SOC.Analyst</code>, and <code>SOC.Viewer</code> to support role-based access controls.</td></tr>
+      <tr><td>Conditional Access</td><td>Recommended for production: MFA, compliant device, trusted location, and session controls aligned to SOC policy.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Per-Tenant Defender XDR Service App Registration</h3>
+  <p>Used by the backend through MSAL confidential client flow. Each Microsoft-enabled tenant entry has a tenant ID, client ID, and client secret. The backend requests the <code>https://graph.microsoft.com/.default</code> scope or the configured security API host <code>.default</code> scope.</p>
+  <table>
+    <thead><tr><th>Permission</th><th>Type</th><th>Why It Is Needed</th></tr></thead>
+    <tbody>
+      <tr><td><code>SecurityIncident.Read.All</code></td><td>Application</td><td>Read Defender XDR incidents from Microsoft Graph Security API.</td></tr>
+      <tr><td><code>SecurityIncident.ReadWrite.All</code></td><td>Application</td><td>Update incident assignment, status, classification, determination, and tags. Required for writeback.</td></tr>
+      <tr><td><code>SecurityAlert.Read.All</code></td><td>Application</td><td>Read related alert information and construct evidence/deep links.</td></tr>
+    </tbody>
+  </table>
+  <p>Administrative consent is required in each customer tenant for application permissions. If the application is configured to use <code>https://api.security.microsoft.com</code> instead of Microsoft Graph, grant the equivalent Microsoft Defender XDR API application permissions for incident read and incident read/write.</p>
+  <ul>
+    <li>Microsoft Defender XDR must be available and licensed for the tenant.</li>
+    <li>The service principal should be restricted to the minimum permissions needed for the enabled workloads.</li>
+    <li>Client secrets should be stored outside source control and rotated on a defined schedule.</li>
+    <li>Production deployments should prefer certificate credentials or managed identity patterns where possible.</li>
+  </ul>
+
+  <h2>Optional Defender Response MCP Gateway Permissions</h2>
+  <p>The dashboard can send approved remediation proposals to a separately deployed Defender Response MCP gateway by using <code>MCP_AUTOMATION_WEBHOOK_URL</code> and <code>MCP_AUTOMATION_WEBHOOK_SECRET</code>.</p>
+  <div class="note">The dashboard itself does not need direct device isolation, account disablement, password reset, or session revocation permissions unless those actions are implemented locally. Those privileged permissions belong to the separate automation gateway and should be documented and approved separately.</div>
+  <p>Typical gateway-level permissions may include highly privileged Defender for Endpoint, Microsoft Graph, or Entra permissions for actions such as device isolation, AV scan, account disablement, session revocation, or password reset. Use a human approval workflow and least privilege for each action.</p>
+
+  <h2>Storage Permissions</h2>
+  <table>
+    <thead><tr><th>Storage Mode</th><th>Permission Needed</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Memory</td><td>None beyond local process memory.</td><td>Default development mode. Data is lost when the process stops.</td></tr>
+      <tr><td>PostgreSQL</td><td>Database account with permission to connect and read/write application tables.</td><td>Use TLS and a least-privilege database user.</td></tr>
+      <tr><td>Azure Cosmos DB</td><td>Cosmos DB key or identity with read/write access to the application database/container.</td><td>Prefer managed identity/RBAC over account keys in production.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Operator Permissions</h2>
+  <table>
+    <thead><tr><th>Operator Role</th><th>Typical Access</th></tr></thead>
+    <tbody>
+      <tr><td>Viewer</td><td>Read dashboards, detections, incidents, reports, and tenant summaries.</td></tr>
+      <tr><td>Analyst</td><td>Viewer access plus triage notes, case updates, correlation actions, closeout preparation, and remediation proposal review.</td></tr>
+      <tr><td>Admin</td><td>Analyst access plus tenant onboarding, tenant configuration updates, integration configuration, and role management.</td></tr>
+    </tbody>
+  </table>
+  <p>Production environments should enforce user authentication and RBAC. Administrative functions such as tenant onboarding and integration changes should be limited to approved SOC administrators.</p>
+
+  <h2>Data Handled By The Software</h2>
+  <ul>
+    <li>Customer and tenant identifiers.</li>
+    <li>Blackpoint detections, alerts, assets, reports, and analytics.</li>
+    <li>Defender XDR incidents, alert references, severity, status, classifications, determinations, tags, and assignment data.</li>
+    <li>Analyst workflow data such as triage, remediation proposals, approvals/rejections, closeout notes, and audit events.</li>
+    <li>API credentials and client secrets on the backend only.</li>
+  </ul>
+  <p>Because this is security operations data, treat application access as privileged even when the current deployment is local.</p>
+
+  <h2>Least-Privilege Summary</h2>
+  <ol>
+    <li>Standard local user rights to run Node.js and bind localhost ports.</li>
+    <li>Write access to the local project folder for dependencies and local config files.</li>
+    <li>Blackpoint CompassOne API key with read access to tenants, detections, alerts, reports, and assets.</li>
+    <li>Entra SPA/API app registration for SOC user sign-in.</li>
+    <li>Per-tenant Microsoft confidential client app with admin-consented application permissions for Defender incident read and, if writeback is enabled, incident read/write.</li>
+    <li>Outbound HTTPS access to Blackpoint, Microsoft identity, Microsoft Graph/Security APIs, npm registry, and source control.</li>
+    <li>Optional storage credentials only if using PostgreSQL or Cosmos DB instead of memory storage.</li>
+    <li>Optional MCP webhook secret and gateway permissions only if automated remediation dispatch is enabled.</li>
+  </ol>
+
+  <h2>Approval Checklist</h2>
+  <ul class="checklist">
+    <li>[ ] Node.js and npm installation approved.</li>
+    <li>[ ] Repository access approved.</li>
+    <li>[ ] Local ports <code>3000</code> and <code>3001</code> approved for development.</li>
+    <li>[ ] Outbound HTTPS destinations approved by network/security team.</li>
+    <li>[ ] Blackpoint API key scope reviewed and approved.</li>
+    <li>[ ] Entra user sign-in app registration configured.</li>
+    <li>[ ] Per-tenant Defender XDR service app registration configured.</li>
+    <li>[ ] Microsoft Graph / Defender permissions admin-consented.</li>
+    <li>[ ] Secrets stored outside Git and rotation owner assigned.</li>
+    <li>[ ] Optional storage access reviewed.</li>
+    <li>[ ] Optional remediation gateway permissions reviewed separately.</li>
+    <li>[ ] RBAC roles and operator access reviewed.</li>
+  </ul>
+
+  <p class="footer">Generated for Q-CFoulon/BP-API-integration. This document describes application-level permissions and should be reviewed against tenant-specific security, licensing, and compliance requirements before production use.</p>
+</body>
+</html>
