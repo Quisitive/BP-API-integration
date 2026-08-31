@@ -38,7 +38,7 @@ export interface PlaybookEntry {
 export interface MatchPattern {
   /** Match field: 'title', 'workload', 'severity', 'entity', 'alertType' */
   field: string;
-  /** Regex or exact match value */
+  /** Exact match value or a safe literal regular expression with optional anchors */
   value: string;
   /** Whether value is a regex */
   isRegex?: boolean;
@@ -54,6 +54,32 @@ export interface IncidentContext {
   workloads: string[];
   alertTypes?: string[];
   entities?: string[];
+}
+
+const REGEX_META_CHARACTERS = '^$\\.*+?()[]{}|';
+
+function isSafeRegex(value: string): boolean {
+  let literalCharacters = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+    if (character === '\\') {
+      const escaped = value[++index];
+      if (!escaped || !REGEX_META_CHARACTERS.includes(escaped)) return false;
+      literalCharacters += 1;
+      continue;
+    }
+    if (character === '^') {
+      if (index !== 0) return false;
+      continue;
+    }
+    if (character === '$') {
+      if (index !== value.length - 1) return false;
+      continue;
+    }
+    if (REGEX_META_CHARACTERS.includes(character)) return false;
+    literalCharacters += 1;
+  }
+  return literalCharacters > 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -185,6 +211,7 @@ export class LearningPlaybookEngine {
 
   private matchesPattern(value: string, pattern: MatchPattern): boolean {
     if (pattern.isRegex) {
+      if (!isSafeRegex(pattern.value)) return false;
       try {
         return new RegExp(pattern.value, 'i').test(value);
       } catch {

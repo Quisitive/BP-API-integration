@@ -58,11 +58,15 @@ interface TenantUpdateRequest {
 }
 
 function sanitizeAlias(raw: string): string {
-  return raw
+  const normalized = raw
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^a-z0-9-]+/g, '-');
+  let start = 0;
+  let end = normalized.length;
+  while (normalized[start] === '-') start += 1;
+  while (end > start && normalized[end - 1] === '-') end -= 1;
+  return normalized.slice(start, end);
 }
 
 function isValidAlias(alias: string): boolean {
@@ -70,13 +74,32 @@ function isValidAlias(alias: string): boolean {
 }
 
 function resolveEnvPlaceholders(raw: string): string {
-  return raw.replace(/\$\{([^}]+)\}/g, (_match, varName: string) => {
+  let resolved = '';
+  let cursor = 0;
+  while (cursor < raw.length) {
+    const start = raw.indexOf('${', cursor);
+    if (start === -1) {
+      return resolved + raw.slice(cursor);
+    }
+    const end = raw.indexOf('}', start + 2);
+    if (end === -1) {
+      return resolved + raw.slice(cursor);
+    }
+    resolved += raw.slice(cursor, start);
+    const varName = raw.slice(start + 2, end);
+    if (!varName) {
+      resolved += raw.slice(start, end + 1);
+      cursor = end + 1;
+      continue;
+    }
     const value = process.env[varName];
     if (value === undefined) {
       throw new Error(`Environment variable ${varName} is not set (referenced in tenant config)`);
     }
-    return value;
-  });
+    resolved += value;
+    cursor = end + 1;
+  }
+  return resolved;
 }
 
 function materializeTenantForRuntime(tenant: UnifiedTenantConfig): UnifiedTenantConfig {

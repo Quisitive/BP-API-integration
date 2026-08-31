@@ -10,6 +10,40 @@ const app = express();
 const PORT = process.env.DASHBOARD_PORT || 4010;
 const API_TARGET = process.env.UNIFIED_API_TARGET || 'http://localhost:3001';
 const BP_API_KEY = process.env.BLACKPOINT_API_KEY || '';
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 100;
+const requestTimestamps = new Map();
+
+if (process.env.TRUST_PROXY === 'true') {
+  app.set('trust proxy', 1);
+}
+
+setInterval(() => {
+  const cutoff = Date.now() - RATE_LIMIT_WINDOW_MS;
+  for (const [ip, timestamps] of requestTimestamps) {
+    const active = timestamps.filter((timestamp) => timestamp > cutoff);
+    if (active.length) {
+      requestTimestamps.set(ip, active);
+    } else {
+      requestTimestamps.delete(ip);
+    }
+  }
+}, RATE_LIMIT_WINDOW_MS).unref();
+
+app.use((req, res, next) => {
+  const now = Date.now();
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const timestamps = (requestTimestamps.get(ip) || []).filter(
+    (timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS,
+  );
+  if (timestamps.length >= RATE_LIMIT_MAX_REQUESTS) {
+    res.status(429).json({ error: 'Rate limit exceeded' });
+    return;
+  }
+  timestamps.push(now);
+  requestTimestamps.set(ip, timestamps);
+  next();
+});
 
 let tenants = [];
 try {
