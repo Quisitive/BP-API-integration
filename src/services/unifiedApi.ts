@@ -433,5 +433,5 @@ export function deleteReport(alias: string, reportId: string) {
 
 /** Build the export download URL for markdown or html. */
 export function reportExportUrl(alias: string, reportId: string, format: 'markdown' | 'html') {
-  return `${BASE}/${alias}/unified/reports/${reportId}/export?format=${format}`;
+  return `${BASE}/${encodeURIComponent(alias)}/unified/reports/${encodeURIComponent(reportId)}/export?format=${format}`;
 }
