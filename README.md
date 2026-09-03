@@ -119,6 +119,8 @@ PORT=3001
 cp config/tenants.example.json config/tenants.json
 ```
 
+> **Fresh clone?** If `config/tenants.json` is absent the server no longer crashes: it falls back to `config/tenants.example.json` (with lenient `${VAR}` interpolation) and, if that is also missing, boots with **0 tenants** and logs a warning. The dashboard still loads — create `config/tenants.json` (and set the referenced `.env` vars) to onboard real tenants.
+
 Each tenant entry includes:
 
 - `alias` — URL-safe identifier used in all API paths

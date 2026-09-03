@@ -104,3 +104,34 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.bp-tenant-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.bp-tenant-row select {
+  flex: 1;
+  min-width: 0;
+}
+
+.bp-refresh-btn {
+  background: #334155;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  padding: 0 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.bp-refresh-btn:hover:not(:disabled) {
+  background: #3f4d63;
+}
+
+.bp-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

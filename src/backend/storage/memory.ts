@@ -20,19 +20,65 @@ import type {
 import type { CaseRepository } from './repository.js';
 import { toCaseRecord } from './repository.js';
 
+/** Plain-object shape used to persist/restore the full repository state. */
+export interface RepositoryState {
+  cases: CaseRecord[];
+  proposals: RemediationProposal[];
+  auditEvents: AuditEvent[];
+  detections: BpDetection[];
+  correlations: DetectionCorrelation[];
+  closeouts: CloseoutRecord[];
+  alertSnapshots: AlertSnapshot[];
+  trendSnapshots: TrendSnapshot[];
+  reports: AfterActionReport[];
+}
+
 export class InMemoryCaseRepository implements CaseRepository {
-  private cases = new Map<string, CaseRecord>();
-  private proposals = new Map<string, RemediationProposal>();
-  private auditEvents: AuditEvent[] = [];
-  private detections = new Map<string, BpDetection>();
-  private correlations: DetectionCorrelation[] = [];
-  private closeouts: CloseoutRecord[] = [];
-  private alertSnapshots: AlertSnapshot[] = [];
-  private trendSnapshots: TrendSnapshot[] = [];
-  private reports = new Map<string, AfterActionReport>();
+  protected cases = new Map<string, CaseRecord>();
+  protected proposals = new Map<string, RemediationProposal>();
+  protected auditEvents: AuditEvent[] = [];
+  protected detections = new Map<string, BpDetection>();
+  protected correlations: DetectionCorrelation[] = [];
+  protected closeouts: CloseoutRecord[] = [];
+  protected alertSnapshots: AlertSnapshot[] = [];
+  protected trendSnapshots: TrendSnapshot[] = [];
+  protected reports = new Map<string, AfterActionReport>();
 
   async init(): Promise<void> {
     // No-op for in-memory
+  }
+
+  /** Persistence hook — no-op in memory; file/db subclasses override. */
+  protected async persist(): Promise<void> {
+    // No-op for in-memory
+  }
+
+  /** Snapshot the full state as plain arrays for serialization. */
+  protected serializeState(): RepositoryState {
+    return {
+      cases: [...this.cases.values()],
+      proposals: [...this.proposals.values()],
+      auditEvents: this.auditEvents,
+      detections: [...this.detections.values()],
+      correlations: this.correlations,
+      closeouts: this.closeouts,
+      alertSnapshots: this.alertSnapshots,
+      trendSnapshots: this.trendSnapshots,
+      reports: [...this.reports.values()],
+    };
+  }
+
+  /** Replace in-memory state from a previously serialized snapshot. */
+  protected hydrateState(state: Partial<RepositoryState>): void {
+    this.cases = new Map((state.cases ?? []).map((c) => [`${c.tenantAlias}:${c.id}`, c]));
+    this.proposals = new Map((state.proposals ?? []).map((p) => [p.proposalId, p]));
+    this.auditEvents = state.auditEvents ?? [];
+    this.detections = new Map((state.detections ?? []).map((d) => [`${d.tenantAlias}:${d.id}`, d]));
+    this.correlations = state.correlations ?? [];
+    this.closeouts = state.closeouts ?? [];
+    this.alertSnapshots = state.alertSnapshots ?? [];
+    this.trendSnapshots = state.trendSnapshots ?? [];
+    this.reports = new Map((state.reports ?? []).map((r) => [`${r.tenantAlias}:${r.id}`, r]));
   }
 
   // -- XDR Incidents --------------------------------------------------------
@@ -41,6 +87,7 @@ export class InMemoryCaseRepository implements CaseRepository {
     const key = `${incident.tenantAlias}:${incident.id}`;
     const record = toCaseRecord(incident);
     this.cases.set(key, record);
+    await this.persist();
     return record;
   }
 
@@ -63,6 +110,7 @@ export class InMemoryCaseRepository implements CaseRepository {
 
   async saveProposal(proposal: RemediationProposal): Promise<void> {
     this.proposals.set(proposal.proposalId, proposal);
+    await this.persist();
   }
 
   async getProposal(proposalId: string): Promise<RemediationProposal | null> {
@@ -83,6 +131,7 @@ export class InMemoryCaseRepository implements CaseRepository {
 
   async addAuditEvent(event: AuditEvent): Promise<void> {
     this.auditEvents.push(event);
+    await this.persist();
   }
 
   async listAuditEvents(tenantAlias: string, incidentId?: string): Promise<AuditEvent[]> {
@@ -97,6 +146,7 @@ export class InMemoryCaseRepository implements CaseRepository {
 
   async upsertDetection(detection: BpDetection): Promise<void> {
     this.detections.set(`${detection.tenantAlias}:${detection.id}`, detection);
+    await this.persist();
   }
 
   async listDetections(tenantAlias: string, limit = 100): Promise<BpDetection[]> {
@@ -118,6 +168,7 @@ export class InMemoryCaseRepository implements CaseRepository {
 
   async saveCorrelation(correlation: DetectionCorrelation): Promise<void> {
     this.correlations.push(correlation);
+    await this.persist();
   }
 
   async listCorrelations(tenantAlias: string): Promise<DetectionCorrelation[]> {
@@ -136,6 +187,7 @@ export class InMemoryCaseRepository implements CaseRepository {
 
   async saveCloseout(record: CloseoutRecord): Promise<void> {
     this.closeouts.push(record);
+    await this.persist();
   }
 
   async listCloseouts(tenantAlias: string, limit = 100): Promise<CloseoutRecord[]> {
@@ -148,6 +200,7 @@ export class InMemoryCaseRepository implements CaseRepository {
 
   async saveAlertSnapshot(snapshot: AlertSnapshot): Promise<void> {
     this.alertSnapshots.push(snapshot);
+    await this.persist();
   }
 
   async listAlertSnapshots(tenantAlias: string, limit = 100): Promise<AlertSnapshot[]> {
@@ -160,6 +213,7 @@ export class InMemoryCaseRepository implements CaseRepository {
 
   async saveTrendSnapshot(snapshot: TrendSnapshot): Promise<void> {
     this.trendSnapshots.push(snapshot);
+    await this.persist();
   }
 
   async listTrendSnapshots(tenantAlias: string, limit = 500): Promise<TrendSnapshot[]> {
@@ -173,6 +227,7 @@ export class InMemoryCaseRepository implements CaseRepository {
 
   async saveReport(report: AfterActionReport): Promise<void> {
     this.reports.set(`${report.tenantAlias}:${report.id}`, report);
+    await this.persist();
   }
 
   async getReport(tenantAlias: string, reportId: string): Promise<AfterActionReport | null> {
@@ -188,5 +243,6 @@ export class InMemoryCaseRepository implements CaseRepository {
 
   async deleteReport(tenantAlias: string, reportId: string): Promise<void> {
     this.reports.delete(`${tenantAlias}:${reportId}`);
+    await this.persist();
   }
 }

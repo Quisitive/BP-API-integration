@@ -145,6 +145,60 @@ async function saveTenantConfigFile(tenants: UnifiedTenantConfig[]): Promise<voi
   await writeFile(TENANTS_CONFIG_PATH, json, 'utf-8');
 }
 
+const ENV_FILE_PATH = path.join(process.cwd(), '.env');
+
+function envKeyPrefix(alias: string): string {
+  return alias.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+// Upsert KEY=value pairs into .env and process.env so they resolve immediately.
+async function upsertEnvVars(vars: Record<string, string>): Promise<void> {
+  let content = '';
+  try {
+    content = await readFile(ENV_FILE_PATH, 'utf-8');
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+  }
+  const lines = content.length ? content.split(/\r?\n/) : [];
+  for (const [key, value] of Object.entries(vars)) {
+    process.env[key] = value;
+    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`^\\s*${escaped}\\s*=`);
+    const idx = lines.findIndex(line => re.test(line));
+    const entry = `${key}=${value}`;
+    if (idx >= 0) lines[idx] = entry;
+    else lines.push(entry);
+  }
+  let out = lines.join('\n');
+  if (!out.endsWith('\n')) out += '\n';
+  await writeFile(ENV_FILE_PATH, out, 'utf-8');
+}
+
+// Move raw (non-placeholder) Microsoft secret values into .env, replacing them
+// with ${ENV} placeholders so nothing sensitive is written to tenants.json.
+function externalizeMicrosoftSecrets(
+  alias: string,
+  ms: MicrosoftTenantConfig,
+): { config: MicrosoftTenantConfig; env: Record<string, string> } {
+  const prefix = envKeyPrefix(alias);
+  const env: Record<string, string> = {};
+  const fieldSuffix: Record<'tenantId' | 'clientId' | 'clientSecret', string> = {
+    tenantId: 'MS_TENANT_ID',
+    clientId: 'MS_CLIENT_ID',
+    clientSecret: 'MS_CLIENT_SECRET',
+  };
+  const config: MicrosoftTenantConfig = { ...ms };
+  (['tenantId', 'clientId', 'clientSecret'] as const).forEach(field => {
+    const value = ms[field];
+    if (typeof value === 'string' && value && !/^\$\{[^}]+\}$/.test(value)) {
+      const key = `${prefix}_${fieldSuffix[field]}`;
+      env[key] = value;
+      config[field] = `\${${key}}`;
+    }
+  });
+  return { config, env };
+}
+
 function toSafeSummary(tenant: UnifiedTenantConfig) {
   return {
     alias: tenant.alias,
@@ -237,7 +291,7 @@ export function createOnboardingRouter(registry: Map<string, UnifiedTenantConfig
         return;
       }
 
-      const microsoft: MicrosoftTenantConfig | undefined = body.microsoft
+      let microsoft: MicrosoftTenantConfig | undefined = body.microsoft
         ? {
             tenantId: body.microsoft.tenantId.trim(),
             clientId: body.microsoft.clientId.trim(),
@@ -248,6 +302,13 @@ export function createOnboardingRouter(registry: Map<string, UnifiedTenantConfig
               : ['DefenderXdr', 'DefenderForOffice365'],
           }
         : undefined;
+
+      let microsoftEnv: Record<string, string> = {};
+      if (microsoft) {
+        const externalized = externalizeMicrosoftSecrets(alias, microsoft);
+        microsoft = externalized.config;
+        microsoftEnv = externalized.env;
+      }
 
       const tenant: UnifiedTenantConfig = {
         alias,
@@ -264,6 +325,9 @@ export function createOnboardingRouter(registry: Map<string, UnifiedTenantConfig
         microsoft,
       };
 
+      if (Object.keys(microsoftEnv).length) {
+        await upsertEnvVars(microsoftEnv);
+      }
       tenants.push(tenant);
       await saveTenantConfigFile(tenants);
       registry.set(alias, materializeTenantForRuntime(tenant));
@@ -346,6 +410,14 @@ export function createOnboardingRouter(registry: Map<string, UnifiedTenantConfig
               }
             : existing.microsoft;
 
+      let microsoftEnv: Record<string, string> = {};
+      let microsoftForStorage = mergedMicrosoft;
+      if (microsoftForStorage) {
+        const externalized = externalizeMicrosoftSecrets(alias, microsoftForStorage);
+        microsoftForStorage = externalized.config;
+        microsoftEnv = externalized.env;
+      }
+
       const updated: UnifiedTenantConfig = {
         ...existing,
         displayName:
@@ -371,9 +443,12 @@ export function createOnboardingRouter(registry: Map<string, UnifiedTenantConfig
               ? body.blackpoint.apiKeyOverride?.trim() || undefined
               : existingBlackpoint?.apiKeyOverride,
         },
-        microsoft: mergedMicrosoft,
+        microsoft: microsoftForStorage,
       };
 
+      if (Object.keys(microsoftEnv).length) {
+        await upsertEnvVars(microsoftEnv);
+      }
       tenants[index] = updated;
       await saveTenantConfigFile(tenants);
       registry.set(alias, materializeTenantForRuntime(updated));
