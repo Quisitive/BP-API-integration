@@ -5,9 +5,20 @@
     "blackpoint": {
       "customerId": "1b318c11-9fbf-4b2d-a12d-852c45c80e29"
     },
-    "microsoft": null,
+    "microsoft": {
+      "tenantId": "${4REFUEL_MS_TENANT_ID}",
+      "clientId": "${4REFUEL_MS_CLIENT_ID}",
+      "clientSecret": "${4REFUEL_MS_CLIENT_SECRET}",
+      "enabledWorkloads": [
+        "DefenderXdr",
+        "DefenderForOffice365",
+        "DefenderForEndpoint",
+        "DefenderForIdentity",
+        "DefenderForCloudApps"
+      ]
+    },
     "enabled": true,
-    "tags": ["blackpoint"]
+    "tags": []
   },
   {
     "alias": "heliene",
@@ -17,7 +28,9 @@
     },
     "microsoft": null,
     "enabled": true,
-    "tags": ["blackpoint"]
+    "tags": [
+      "blackpoint"
+    ]
   },
   {
     "alias": "nonin",
@@ -25,9 +38,19 @@
     "blackpoint": {
       "customerId": "3bc145e5-00bd-4be5-a9b2-76870f76860c"
     },
-    "microsoft": null,
+    "microsoft": {
+      "tenantId": "${NONIN_MS_TENANT_ID}",
+      "clientId": "${NONIN_MS_CLIENT_ID}",
+      "clientSecret": "${NONIN_MS_CLIENT_SECRET}",
+      "enabledWorkloads": [
+        "DefenderXdr",
+        "DefenderForOffice365"
+      ]
+    },
     "enabled": true,
-    "tags": ["blackpoint"]
+    "tags": [
+      "blackpoint"
+    ]
   },
   {
     "alias": "quisitive-sandbox",
@@ -37,7 +60,10 @@
     },
     "microsoft": null,
     "enabled": true,
-    "tags": ["blackpoint", "demo"]
+    "tags": [
+      "blackpoint",
+      "demo"
+    ]
   },
   {
     "alias": "velosity",
@@ -47,6 +73,8 @@
     },
     "microsoft": null,
     "enabled": true,
-    "tags": ["blackpoint"]
+    "tags": [
+      "blackpoint"
+    ]
   }
 ]
