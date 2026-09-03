@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './TenantOnboardingWizard.css';
 
 interface TenantSummary {
@@ -63,25 +63,33 @@ const TenantOnboardingWizard: React.FC<Props> = ({ onCreated }) => {
   );
   const isUpdate = !!existingMatch;
 
-  useEffect(() => {
+  // Pull the Blackpoint customer list from the connected API; reusable so the
+  // Refresh button can re-fetch without reloading the page. Keeps the current
+  // selection if it still exists, otherwise defaults to the first tenant.
+  const loadBpTenants = useCallback(async () => {
     setLoadingBpTenants(true);
     setError(null);
-
-    fetch('/api/onboarding/blackpoint-tenants')
-      .then(async (res) => {
-        if (!res.ok) {
-          throw new Error(`Failed to load Blackpoint tenants (${res.status})`);
-        }
-        const data = (await res.json()) as { data: BpTenant[] };
-        const tenants = data.data || [];
-        setBpTenants(tenants);
-        if (tenants.length > 0) {
-          setSelectedBpCustomerId(tenants[0].id);
-        }
-      })
-      .catch((err) => setError((err as Error).message))
-      .finally(() => setLoadingBpTenants(false));
+    try {
+      const res = await fetch('/api/onboarding/blackpoint-tenants');
+      if (!res.ok) {
+        throw new Error(`Failed to load Blackpoint tenants (${res.status})`);
+      }
+      const data = (await res.json()) as { data: BpTenant[] };
+      const tenants = data.data || [];
+      setBpTenants(tenants);
+      setSelectedBpCustomerId(prev =>
+        prev && tenants.some(t => t.id === prev) ? prev : tenants[0]?.id ?? '',
+      );
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoadingBpTenants(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadBpTenants();
+  }, [loadBpTenants]);
 
   useEffect(() => {
     fetch('/api/onboarding/tenants')
@@ -232,23 +240,34 @@ const TenantOnboardingWizard: React.FC<Props> = ({ onCreated }) => {
           <legend>2) Blackpoint (Real Detection Data)</legend>
           <label>
             Blackpoint tenant
-            <select
-              value={selectedBpCustomerId}
-              onChange={(e) => setSelectedBpCustomerId(e.target.value)}
-              required
-            >
-              {loadingBpTenants ? (
-                <option value="">Loading Blackpoint tenants…</option>
-              ) : bpTenants.length === 0 ? (
-                <option value="">No Blackpoint tenants returned</option>
-              ) : (
-                bpTenants.map(t => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} ({t.id})
-                  </option>
-                ))
-              )}
-            </select>
+            <div className="bp-tenant-row">
+              <select
+                value={selectedBpCustomerId}
+                onChange={(e) => setSelectedBpCustomerId(e.target.value)}
+                required
+              >
+                {loadingBpTenants ? (
+                  <option value="">Loading Blackpoint tenants…</option>
+                ) : bpTenants.length === 0 ? (
+                  <option value="">No Blackpoint tenants returned</option>
+                ) : (
+                  bpTenants.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.id})
+                    </option>
+                  ))
+                )}
+              </select>
+              <button
+                type="button"
+                className="bp-refresh-btn"
+                onClick={() => void loadBpTenants()}
+                disabled={loadingBpTenants}
+                title="Reload the tenant list from the Blackpoint API"
+              >
+                {loadingBpTenants ? 'Refreshing…' : 'Refresh'}
+              </button>
+            </div>
           </label>
           <label>
             API key override (optional)
