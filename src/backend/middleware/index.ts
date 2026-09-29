@@ -9,4 +9,6 @@ export { authenticationMiddleware, optionalAuth, type AuthenticatedUser } from '
 export { requirePermission, requireRole, resolveRole, hasPermission, type InternalRole, type Permission } from './authorization.js';
 export { tenantIsolationMiddleware, type TenantRegistry } from './tenantIsolation.js';
 export { auditMiddleware, type AuditEntry } from './audit.js';
+export { accessLogMiddleware } from './accessLog.js';
+export { metricsMiddleware } from './metrics.js';
 export { validateBody, validateQuery, validateParams, schemas } from './inputValidation.js';

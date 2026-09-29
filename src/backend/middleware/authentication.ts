@@ -12,6 +12,17 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
+import { logger, getClientIp, redactPath } from '../utils/logger.js';
+
+function logAuthFailure(req: Request, reason: string): void {
+  logger.security('auth.failure', {
+    reason,
+    requestId: req.requestId || 'unknown',
+    method: req.method,
+    path: redactPath(req.originalUrl),
+    ip: getClientIp(req),
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -102,6 +113,7 @@ export function authenticationMiddleware(
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    logAuthFailure(req, 'missing_bearer_token');
     res.status(401).json({ error: 'Missing or invalid Authorization header' });
     return;
   }
@@ -111,6 +123,7 @@ export function authenticationMiddleware(
   // Decode without verification first to get the key ID
   const decoded = jwt.decode(token, { complete: true });
   if (!decoded || typeof decoded === 'string' || !decoded.header.kid) {
+    logAuthFailure(req, 'invalid_token_structure');
     res.status(401).json({ error: 'Invalid token structure' });
     return;
   }
@@ -143,6 +156,7 @@ export function authenticationMiddleware(
             ? 'Token validation failed'
             : 'Authentication error';
 
+      logAuthFailure(req, message === 'Token expired' ? 'token_expired' : 'token_validation_failed');
       res.status(401).json({ error: message });
     });
 }

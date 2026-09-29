@@ -11,6 +11,7 @@
 // ---------------------------------------------------------------------------
 
 import type { Request, Response, NextFunction } from 'express';
+import { logger, getClientIp, redactPath } from '../utils/logger.js';
 
 interface SlidingWindowEntry {
   timestamps: number[];
@@ -31,12 +32,17 @@ setInterval(() => {
   }
 }, CLEANUP_INTERVAL_MS).unref();
 
-function getClientIp(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') {
-    return forwarded.split(',')[0].trim();
-  }
-  return req.socket.remoteAddress || 'unknown';
+function logRateLimited(req: Request, scope: string, retryAfterMs: number): void {
+  logger.security('rate.limited', {
+    scope,
+    requestId: req.requestId || 'unknown',
+    method: req.method,
+    path: redactPath(req.originalUrl),
+    ip: getClientIp(req),
+    tenantAlias: req.params?.alias || null,
+    userId: req.user?.oid || 'anonymous',
+    retryAfterMs,
+  });
 }
 
 function checkWindow(
@@ -92,6 +98,7 @@ export function rateLimitMiddleware(opts: Partial<RateLimitOptions> = {}) {
     const ipKey = `ip:${getClientIp(req)}`;
     const ipResult = checkWindow(ipKey, config.perIp.max, config.perIp.windowMs);
     if (!ipResult.allowed) {
+      logRateLimited(req, 'ip', ipResult.retryAfterMs);
       res.status(429);
       res.setHeader('Retry-After', String(Math.ceil(ipResult.retryAfterMs / 1000)));
       res.json({ error: 'Rate limit exceeded', scope: 'ip' });
@@ -104,6 +111,7 @@ export function rateLimitMiddleware(opts: Partial<RateLimitOptions> = {}) {
       const tenantKey = `tenant:${alias}`;
       const tenantResult = checkWindow(tenantKey, config.perTenant.max, config.perTenant.windowMs);
       if (!tenantResult.allowed) {
+        logRateLimited(req, 'tenant', tenantResult.retryAfterMs);
         res.status(429);
         res.setHeader('Retry-After', String(Math.ceil(tenantResult.retryAfterMs / 1000)));
         res.json({ error: 'Rate limit exceeded', scope: 'tenant' });
@@ -118,6 +126,7 @@ export function rateLimitMiddleware(opts: Partial<RateLimitOptions> = {}) {
       const userWriteKey = `user-write:${userId}`;
       const userResult = checkWindow(userWriteKey, config.perUserWrite.max, config.perUserWrite.windowMs);
       if (!userResult.allowed) {
+        logRateLimited(req, 'user-write', userResult.retryAfterMs);
         res.status(429);
         res.setHeader('Retry-After', String(Math.ceil(userResult.retryAfterMs / 1000)));
         res.json({ error: 'Rate limit exceeded', scope: 'user-write' });

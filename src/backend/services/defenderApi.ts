@@ -8,6 +8,8 @@
 
 import { ConfidentialClientApplication } from '@azure/msal-node';
 import type { UnifiedTenantConfig, MicrosoftTenantConfig } from '../config/tenants.schema.js';
+import { logger, redactPath } from '../utils/logger.js';
+import { recordUpstream } from '../utils/metrics.js';
 import type {
   IncidentSummary,
   IncidentStatus,
@@ -170,39 +172,117 @@ export class DefenderApiClient {
     const scope = ms.securityApiHost
       ? `${ms.securityApiHost}/.default`
       : 'https://graph.microsoft.com/.default';
-    const token = await acquireToken(ms, scope);
 
-    const response = await fetch(url, {
-      ...init,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...(init?.headers as Record<string, string> | undefined),
-      },
-    });
+    const method = init?.method || 'GET';
+    const logPath = redactPath(url);
+    const start = Date.now();
+    try {
+      const token = await acquireToken(ms, scope);
 
-    if (!response.ok) {
-      throw new Error(`Defender API error: ${response.status} on ${init?.method || 'GET'} ${url}`);
+      const response = await fetch(url, {
+        ...init,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          ...(init?.headers as Record<string, string> | undefined),
+        },
+      });
+
+      if (!response.ok) {
+        recordUpstream('defender', false, response.status, Date.now() - start);
+        logger.warn('upstream.error', {
+          provider: 'defender',
+          method,
+          path: logPath,
+          status: response.status,
+          tenantId: ms.tenantId,
+          durationMs: Date.now() - start,
+        });
+        const err = new Error(`Defender API error: ${response.status} on ${method} ${url}`);
+        (err as { __logged?: boolean }).__logged = true;
+        throw err;
+      }
+
+      const data = (await response.json()) as T;
+      recordUpstream('defender', true, response.status, Date.now() - start);
+      logger.info('upstream.call', {
+        provider: 'defender',
+        method,
+        path: logPath,
+        status: response.status,
+        tenantId: ms.tenantId,
+        durationMs: Date.now() - start,
+      });
+      return data;
+    } catch (err) {
+      if (!(err as { __logged?: boolean }).__logged) {
+        recordUpstream('defender', false, 0, Date.now() - start);
+        logger.error('upstream.failure', {
+          provider: 'defender',
+          method,
+          path: logPath,
+          tenantId: ms.tenantId,
+          durationMs: Date.now() - start,
+          error: (err as Error).message,
+        });
+      }
+      throw err;
     }
-
-    return (await response.json()) as T;
   }
 
   private async requestGraphApi<T>(ms: MicrosoftTenantConfig, url: string): Promise<T> {
-    const token = await acquireToken(ms, 'https://graph.microsoft.com/.default');
+    const logPath = redactPath(url);
+    const start = Date.now();
+    try {
+      const token = await acquireToken(ms, 'https://graph.microsoft.com/.default');
 
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (!response.ok) {
-      throw new Error(`Graph API error: ${response.status} on GET ${url}`);
+      if (!response.ok) {
+        recordUpstream('graph', false, response.status, Date.now() - start);
+        logger.warn('upstream.error', {
+          provider: 'graph',
+          method: 'GET',
+          path: logPath,
+          status: response.status,
+          tenantId: ms.tenantId,
+          durationMs: Date.now() - start,
+        });
+        const err = new Error(`Graph API error: ${response.status} on GET ${url}`);
+        (err as { __logged?: boolean }).__logged = true;
+        throw err;
+      }
+
+      const data = (await response.json()) as T;
+      recordUpstream('graph', true, response.status, Date.now() - start);
+      logger.info('upstream.call', {
+        provider: 'graph',
+        method: 'GET',
+        path: logPath,
+        status: response.status,
+        tenantId: ms.tenantId,
+        durationMs: Date.now() - start,
+      });
+      return data;
+    } catch (err) {
+      if (!(err as { __logged?: boolean }).__logged) {
+        recordUpstream('graph', false, 0, Date.now() - start);
+        logger.error('upstream.failure', {
+          provider: 'graph',
+          method: 'GET',
+          path: logPath,
+          tenantId: ms.tenantId,
+          durationMs: Date.now() - start,
+          error: (err as Error).message,
+        });
+      }
+      throw err;
     }
-
-    return (await response.json()) as T;
   }
 
   private mapIncident(tenantAlias: string, raw: RawIncident): IncidentSummary {
