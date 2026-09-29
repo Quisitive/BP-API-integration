@@ -8,6 +8,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import type { UnifiedTenantConfig } from '../config/tenants.schema.js';
+import { logger, getClientIp } from '../utils/logger.js';
 
 declare global {
   namespace Express {
@@ -35,11 +36,25 @@ export function tenantIsolationMiddleware(registry: TenantRegistry) {
 
     const tenant = registry.get(alias);
     if (!tenant) {
+      logger.security('tenant.denied', {
+        reason: 'not_found',
+        alias,
+        requestId: req.requestId || 'unknown',
+        userId: req.user?.oid || 'anonymous',
+        ip: getClientIp(req),
+      });
       res.status(404).json({ error: 'Tenant not found', alias });
       return;
     }
 
     if (!tenant.enabled) {
+      logger.security('tenant.denied', {
+        reason: 'disabled',
+        alias,
+        requestId: req.requestId || 'unknown',
+        userId: req.user?.oid || 'anonymous',
+        ip: getClientIp(req),
+      });
       res.status(403).json({ error: 'Tenant is disabled', alias });
       return;
     }

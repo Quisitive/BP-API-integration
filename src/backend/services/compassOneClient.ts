@@ -8,6 +8,8 @@
 // ---------------------------------------------------------------------------
 
 import type { UnifiedTenantConfig } from '../config/tenants.schema.js';
+import { logger, redactPath } from '../utils/logger.js';
+import { recordUpstream } from '../utils/metrics.js';
 
 // ---------------------------------------------------------------------------
 // Types (mirrors legacy/types/blackpoint.types.ts relevant subsets)
@@ -274,6 +276,63 @@ export class CompassOneClient {
   }
 
   // -------------------------------------------------------------------------
+  // Capability probe (endpoint discovery)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Issue a lightweight GET against an arbitrary read-only path to test whether
+   * the API key can reach it. Never throws and never emits upstream.error logs —
+   * a 403/404 is an expected outcome during capability discovery. The response
+   * body is cancelled without being parsed to keep probes cheap.
+   */
+  async probe(opts: {
+    path: string;
+    scope: 'account' | 'tenant';
+    tenant?: UnifiedTenantConfig;
+    timeoutMs?: number;
+  }): Promise<{ status: number; ok: boolean; error?: string }> {
+    const { path, scope, tenant } = opts;
+    const base = scope === 'tenant' && tenant ? this.resolveBaseUrl(tenant) : this.baseUrl;
+    const key = scope === 'tenant' && tenant ? this.resolveApiKey(tenant) : this.apiKey;
+
+    if (!key) return { status: 0, ok: false, error: 'no_api_key' };
+
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    };
+    if (scope === 'tenant') {
+      const customerId = tenant?.blackpoint?.customerId;
+      if (!customerId) return { status: 0, ok: false, error: 'no_customer_id' };
+      headers['x-tenant-id'] = customerId;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 8000);
+    const start = Date.now();
+    try {
+      const response = await fetch(`${base}/v1${path}`, {
+        method: 'GET',
+        headers,
+        signal: controller.signal,
+      });
+      await response.body?.cancel().catch(() => undefined);
+      logger.debug('discovery.probe', {
+        provider: 'compassone',
+        path: redactPath(path),
+        scope,
+        status: response.status,
+        durationMs: Date.now() - start,
+      });
+      return { status: response.status, ok: response.ok };
+    } catch (err) {
+      return { status: 0, ok: false, error: (err as Error).message };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // Internal HTTP helpers
   // -------------------------------------------------------------------------
 
@@ -312,18 +371,53 @@ export class CompassOneClient {
       'x-tenant-id': customerId,
     };
 
-    const response = await fetch(url, { method: 'GET', headers });
+    const logPath = redactPath(path + (qs && qs.toString() ? `?${qs.toString()}` : ''));
+    const start = Date.now();
+    try {
+      const response = await fetch(url, { method: 'GET', headers });
 
-    if (!response.ok) {
-      const body = await response.text().catch(() => '');
-      throw new CompassOneApiError(
-        `CompassOne API error: ${response.status} ${response.statusText} on GET ${path}`,
-        response.status,
-        body,
-      );
+      if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        recordUpstream('compassone', false, response.status, Date.now() - start);
+        logger.warn('upstream.error', {
+          provider: 'compassone',
+          method: 'GET',
+          path: logPath,
+          status: response.status,
+          tenantAlias: tenant.alias,
+          durationMs: Date.now() - start,
+        });
+        throw new CompassOneApiError(
+          `CompassOne API error: ${response.status} ${response.statusText} on GET ${path}`,
+          response.status,
+          body,
+        );
+      }
+
+      const data = (await response.json()) as T;
+      recordUpstream('compassone', true, response.status, Date.now() - start);
+      logger.info('upstream.call', {
+        provider: 'compassone',
+        method: 'GET',
+        path: logPath,
+        status: response.status,
+        tenantAlias: tenant.alias,
+        durationMs: Date.now() - start,
+      });
+      return data;
+    } catch (err) {
+      if (err instanceof CompassOneApiError) throw err;
+      recordUpstream('compassone', false, 0, Date.now() - start);
+      logger.error('upstream.failure', {
+        provider: 'compassone',
+        method: 'GET',
+        path: logPath,
+        tenantAlias: tenant.alias,
+        durationMs: Date.now() - start,
+        error: (err as Error).message,
+      });
+      throw err;
     }
-
-    return (await response.json()) as T;
   }
 
   private async getAccountLevel<T>(path: string, qs?: URLSearchParams): Promise<T> {
@@ -337,23 +431,58 @@ export class CompassOneClient {
       url += `?${qs.toString()}`;
     }
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const logPath = redactPath(path + (qs && qs.toString() ? `?${qs.toString()}` : ''));
+    const start = Date.now();
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${key}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (!response.ok) {
-      const body = await response.text().catch(() => '');
-      throw new CompassOneApiError(
-        `CompassOne API error: ${response.status} ${response.statusText} on GET ${path}`,
-        response.status,
-        body,
-      );
+      if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        recordUpstream('compassone', false, response.status, Date.now() - start);
+        logger.warn('upstream.error', {
+          provider: 'compassone',
+          method: 'GET',
+          path: logPath,
+          status: response.status,
+          tenantAlias: 'account',
+          durationMs: Date.now() - start,
+        });
+        throw new CompassOneApiError(
+          `CompassOne API error: ${response.status} ${response.statusText} on GET ${path}`,
+          response.status,
+          body,
+        );
+      }
+
+      const data = (await response.json()) as T;
+      recordUpstream('compassone', true, response.status, Date.now() - start);
+      logger.info('upstream.call', {
+        provider: 'compassone',
+        method: 'GET',
+        path: logPath,
+        status: response.status,
+        tenantAlias: 'account',
+        durationMs: Date.now() - start,
+      });
+      return data;
+    } catch (err) {
+      if (err instanceof CompassOneApiError) throw err;
+      recordUpstream('compassone', false, 0, Date.now() - start);
+      logger.error('upstream.failure', {
+        provider: 'compassone',
+        method: 'GET',
+        path: logPath,
+        tenantAlias: 'account',
+        durationMs: Date.now() - start,
+        error: (err as Error).message,
+      });
+      throw err;
     }
-
-    return (await response.json()) as T;
   }
 }

@@ -22,14 +22,20 @@ import {
   rateLimitMiddleware,
   optionalAuth,
   auditMiddleware,
+  accessLogMiddleware,
+  metricsMiddleware,
   tenantIsolationMiddleware,
 } from './middleware/index.js';
-import { createRepository } from './storage/factory.js';
+import { createRepository, getRepository } from './storage/factory.js';
 import { startSnapshotScheduler } from './services/trendSnapshots.js';
+import { startEndpointDiscoveryScheduler } from './services/endpointDiscovery.js';
+import { logger } from './utils/logger.js';
+import { renderMetrics } from './utils/metrics.js';
 import bpRoutes from './routes/bp/index.js';
 import xdrRoutes from './routes/xdr/index.js';
 import unifiedRoutes from './routes/unified/index.js';
 import { createOnboardingRouter } from './routes/onboarding.js';
+import { createDiscoveryRouter } from './routes/discovery.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -51,21 +57,22 @@ async function main() {
   // ---- Load tenant configuration ----
   const tenants = await loadTenants();
   const registry = buildTenantRegistry(tenants);
-  console.log(`[boot] Loaded ${registry.size} tenant(s)`);
+  logger.info('boot.tenants_loaded', { count: registry.size });
 
   // ---- Initialize storage backend ----
   await createRepository();
-  console.log(`[boot] Storage backend ready (${process.env.STORAGE_BACKEND || 'memory'})`);
+  logger.info('boot.storage_ready', { backend: process.env.STORAGE_BACKEND || 'memory' });
 
   // ---- Global middleware (applied in order) ----
   app.use(requestIdMiddleware);
   app.use(securityHeaders);
+  app.use(metricsMiddleware);
   app.use(rateLimitMiddleware());
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: false }));
 
   // Authentication — in local dev, allow testing tenant/onboarding routes without Entra JWT.
-  const publicPaths = ['/api/health', '/api/ready'];
+  const publicPaths = ['/api/health', '/api/ready', '/api/metrics'];
   if (allowLocalDevNoAuth) {
     publicPaths.push('/api/tenants', '/api/onboarding');
   }
@@ -74,13 +81,30 @@ async function main() {
   // Audit — logs all write operations
   app.use(auditMiddleware);
 
+  // Access log — records API reads for forensics
+  app.use(accessLogMiddleware);
+
   // ---- Health / readiness (unauthenticated) ----
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', uptime: process.uptime() });
   });
 
-  app.get('/api/ready', (_req, res) => {
-    res.json({ status: 'ready', tenants: registry.size });
+  app.get('/api/ready', async (_req, res) => {
+    // Probe the storage backend so orchestrators get a truthful signal
+    // instead of a constant "ready".
+    try {
+      await getRepository().listCases('__healthcheck__', 1);
+      res.json({ status: 'ready', tenants: registry.size, storage: 'ok' });
+    } catch (err) {
+      logger.error('ready.storage_unavailable', { error: (err as Error).message });
+      res.status(503).json({ status: 'not-ready', storage: 'unavailable' });
+    }
+  });
+
+  // ---- Prometheus metrics (unauthenticated) ----
+  app.get('/api/metrics', (_req, res) => {
+    res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+    res.send(renderMetrics());
   });
 
   // ---- Tenant-scoped routes ----
@@ -115,6 +139,9 @@ async function main() {
   // ---- Onboarding API (client + O365 tenant setup) ----
   app.use('/api/onboarding', createOnboardingRouter(registry));
 
+  // ---- Capability discovery (which BP endpoints are now readable) ----
+  app.use('/api/discovery', createDiscoveryRouter(registry));
+
   // ---- Serve React SPA (Vite build) ----
   app.use(express.static(STATIC_DIR));
 
@@ -125,14 +152,17 @@ async function main() {
 
   // ---- Start ----
   app.listen(PORT, () => {
-    console.log(`[server] Unified SOC Dashboard running on http://localhost:${PORT}`);
+    logger.info('server.listening', { port: PORT, url: `http://localhost:${PORT}` });
   });
 
   // Optional periodic trend-snapshot capture (gated by ENABLE_TREND_SNAPSHOTS=true)
   startSnapshotScheduler(registry);
+
+  // Optional periodic BP endpoint discovery (gated by ENABLE_ENDPOINT_DISCOVERY=true)
+  startEndpointDiscoveryScheduler(registry);
 }
 
 main().catch(err => {
-  console.error('[server] Fatal startup error:', err);
+  logger.error('server.fatal_startup', { error: (err as Error).message });
   process.exit(1);
 });

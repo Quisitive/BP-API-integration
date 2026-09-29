@@ -9,6 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import type { Request, Response, NextFunction } from 'express';
+import { logger, redactPath, getClientIp } from '../utils/logger.js';
 
 export interface AuditEntry {
   timestamp: string;
@@ -20,6 +21,7 @@ export interface AuditEntry {
   tenantAlias: string | null;
   statusCode: number;
   durationMs: number;
+  ip: string;
 }
 
 const AUDITABLE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -40,14 +42,15 @@ export function auditMiddleware(req: Request, res: Response, next: NextFunction)
       userId: req.user?.oid || 'anonymous',
       userName: req.user?.preferredUsername || 'anonymous',
       method: req.method,
-      path: req.originalUrl,
-      tenantAlias: req.tenant?.alias || null,
+      path: redactPath(req.originalUrl),
+      tenantAlias: req.tenant?.alias || req.params?.alias || null,
       statusCode: res.statusCode,
       durationMs: Date.now() - start,
+      ip: getClientIp(req),
     };
 
     // Structured JSON log — picked up by container logging drivers
-    process.stdout.write(JSON.stringify({ level: 'audit', ...entry }) + '\n');
+    logger.audit({ ...entry });
   });
 
   next();

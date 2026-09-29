@@ -11,3 +11,6 @@ build/
 dist/
 dist-server/
 
+# Local JSON file storage backend (STORAGE_BACKEND=file)
+.data/
+
