@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@azure/msal-browser": "^3.27.0",
-    "@azure/msal-node": "^5.4.0",
+    "@azure/msal-node": "^7.1.0",
     "@azure/msal-react": "^2.1.0",
     "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",
